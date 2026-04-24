@@ -1,152 +1,182 @@
-import React, { useMemo, useState } from "react";
+import { useState } from "react";
 
 export default function App() {
-  const [pricePerGram, setPricePerGram] = useState(150000);
+  const [price, setPrice] = useState(150000);
   const [weight, setWeight] = useState(3.75);
-  const [unit, setUnit] = useState("g");
-  const [purity, setPurity] = useState(24);
-  const [labor, setLabor] = useState(50000);
+  const [karat, setKarat] = useState(24);
+  const [making, setMaking] = useState(50000);
+  const [roundType, setRoundType] = useState("round");
 
-  const gramWeight = useMemo(() => {
-    return unit === "don" ? Number(weight) * 3.75 : Number(weight);
-  }, [weight, unit]);
+  const pureWeight = weight * (karat / 24);
+  const rawTotal = pureWeight * price + Number(making);
 
-  const pureRate = purity / 24;
+  const finalPrice =
+    roundType === "down"
+      ? Math.floor(rawTotal / 1000) * 1000
+      : roundType === "up"
+      ? Math.ceil(rawTotal / 1000) * 1000
+      : Math.round(rawTotal / 1000) * 1000;
 
-  const rawPrice = useMemo(() => {
-    return gramWeight * pricePerGram * pureRate + Number(labor);
-  }, [gramWeight, pricePerGram, pureRate, labor]);
+  const copyPrice = () => {
+    navigator.clipboard.writeText(finalPrice.toLocaleString() + "원");
+    alert("판매가 복사 완료");
+  };
 
-  const sellPrice = useMemo(() => {
-    return Math.floor(rawPrice / 1000) * 1000;
-  }, [rawPrice]);
-
-  const money = (num) => Number(num || 0).toLocaleString("ko-KR");
+  const quickWeights = [
+    { label: "1돈", value: 3.75 },
+    { label: "2돈", value: 7.5 },
+    { label: "3돈", value: 11.25 },
+    { label: "5돈", value: 18.75 },
+    { label: "10돈", value: 37.5 },
+  ];
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "40px",
-        fontFamily: "Arial, sans-serif",
+        maxWidth: "700px",
+        margin: "0 auto",
+        padding: "30px",
+        fontFamily: "sans-serif",
       }}
     >
+      <h1 style={{ fontSize: "56px", marginBottom: "10px" }}>Gold Calc</h1>
+      <p style={{ color: "#555", marginBottom: "30px" }}>금 판매가 계산기</p>
+
+      <label>오늘 금 시세 (1g)</label>
+      <input
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        style={inputStyle}
+      />
+
+      <div style={{ marginTop: "25px" }}>
+        <label>빠른 중량 선택</label>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
+          {quickWeights.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => setWeight(item.value)}
+              style={smallBtn}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: "25px" }}>
+        <label>중량 (g)</label>
+        <input
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginTop: "25px" }}>
+        <label>순도</label>
+        <select
+          value={karat}
+          onChange={(e) => setKarat(Number(e.target.value))}
+          style={inputStyle}
+        >
+          <option value={24}>24K</option>
+          <option value={22}>22K</option>
+          <option value={18}>18K</option>
+          <option value={14}>14K</option>
+          <option value={10}>10K</option>
+        </select>
+      </div>
+
+      <div style={{ marginTop: "25px" }}>
+        <label>공임</label>
+        <input
+          value={making}
+          onChange={(e) => setMaking(e.target.value)}
+          style={inputStyle}
+        />
+      </div>
+
+      <div style={{ marginTop: "25px" }}>
+        <label>천원 단위 처리</label>
+        <select
+          value={roundType}
+          onChange={(e) => setRoundType(e.target.value)}
+          style={inputStyle}
+        >
+          <option value="round">반올림</option>
+          <option value="down">내림</option>
+          <option value="up">올림</option>
+        </select>
+      </div>
+
       <div
         style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          background: "#fff",
-          borderRadius: "18px",
-          padding: "32px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+          background: "#081633",
+          color: "white",
+          padding: "30px",
+          borderRadius: "20px",
+          marginTop: "35px",
         }}
       >
-        <h1 style={{ fontSize: "42px", marginBottom: "8px" }}>Gold Calc</h1>
-        <p style={{ color: "#64748b", marginBottom: "28px" }}>
-          금 판매가 계산기
-        </p>
-
-        <div style={{ display: "grid", gap: "16px" }}>
-          <label>
-            오늘 금 시세 (1g)
-            <input
-              type="number"
-              value={pricePerGram}
-              onChange={(e) => setPricePerGram(e.target.value)}
-              style={input}
-            />
-          </label>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 140px", gap: "12px" }}>
-            <label>
-              중량
-              <input
-                type="number"
-                value={weight}
-                step="0.01"
-                onChange={(e) => setWeight(e.target.value)}
-                style={input}
-              />
-            </label>
-
-            <label>
-              단위
-              <select
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                style={input}
-              >
-                <option value="g">그램(g)</option>
-                <option value="don">돈</option>
-              </select>
-            </label>
-          </div>
-
-          <label>
-            순도
-            <select
-              value={purity}
-              onChange={(e) => setPurity(Number(e.target.value))}
-              style={input}
-            >
-              <option value={24}>24K</option>
-              <option value={18}>18K</option>
-              <option value={14}>14K</option>
-            </select>
-          </label>
-
-          <label>
-            공임
-            <input
-              type="number"
-              value={labor}
-              onChange={(e) => setLabor(e.target.value)}
-              style={input}
-            />
-          </label>
+        <div style={{ fontSize: "22px" }}>판매가</div>
+        <div style={{ fontSize: "62px", fontWeight: "bold", marginTop: "10px" }}>
+          {finalPrice.toLocaleString()}원
         </div>
+      </div>
 
-        <div
-          style={{
-            marginTop: "28px",
-            padding: "24px",
-            borderRadius: "16px",
-            background: "#0f172a",
-            color: "white",
-          }}
-        >
-          <div style={{ fontSize: "14px", opacity: 0.8 }}>판매가</div>
-          <div style={{ fontSize: "42px", fontWeight: "700", marginTop: "8px" }}>
-            {money(sellPrice)}원
-          </div>
-        </div>
+      <button
+        onClick={copyPrice}
+        style={{
+          ...bigBtn,
+          marginTop: "15px",
+          background: "#111",
+        }}
+      >
+        판매가 복사하기
+      </button>
 
-        <div
-          style={{
-            marginTop: "18px",
-            background: "#f1f5f9",
-            padding: "18px",
-            borderRadius: "14px",
-            color: "#334155",
-            lineHeight: 1.8,
-          }}
-        >
-          검산식<br />
-          {money(gramWeight)}g × {money(pricePerGram)}원 × {purity}/24 +{" "}
-          {money(labor)}원 = {money(Math.round(rawPrice))}원
-        </div>
+      <div
+        style={{
+          marginTop: "25px",
+          background: "#f3f4f6",
+          padding: "20px",
+          borderRadius: "15px",
+          fontSize: "22px",
+        }}
+      >
+        검산식 <br />
+        {weight}g × {price.toLocaleString()}원 × {karat}/24 +{" "}
+        {Number(making).toLocaleString()}원
       </div>
     </div>
   );
 }
 
-const input = {
+const inputStyle = {
   width: "100%",
-  marginTop: "8px",
-  padding: "12px",
+  padding: "18px",
+  fontSize: "28px",
+  marginTop: "10px",
+  borderRadius: "12px",
+  border: "1px solid #ccc",
+};
+
+const bigBtn = {
+  width: "100%",
+  padding: "18px",
+  color: "white",
+  border: "none",
+  borderRadius: "14px",
+  fontSize: "26px",
+  cursor: "pointer",
+};
+
+const smallBtn = {
+  padding: "10px 18px",
   borderRadius: "10px",
-  border: "1px solid #cbd5e1",
-  fontSize: "16px",
-  boxSizing: "border-box",
+  border: "1px solid #ddd",
+  background: "#fff",
+  cursor: "pointer",
+  fontSize: "20px",
 };
