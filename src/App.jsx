@@ -1,3 +1,4 @@
+import React from "react";
 export default function App() {
   const rows = [
     ["컷팅볼 1", "한국금거래소", "24K", "3.75", "2025-05-21"],
