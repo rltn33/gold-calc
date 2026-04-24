@@ -1,201 +1,246 @@
-import { useState } from "react";
-import "./App.css";
+좋아. 이번엔 정확히 네가 원하는 방향으로 간다.
 
+**계산기 사이트 말고**
+**금은방 매장용 관리자 프로그램 느낌.**
+
+# 지금 할 것
+
+GitHub → `src/App.jsx` **전체 삭제 후 아래 코드 붙여넣기**
+
+```jsx id="v1g2u8"
 export default function App() {
-  const [price, setPrice] = useState(150000);
-  const [weight, setWeight] = useState(3.75);
-  const [purity, setPurity] = useState(24);
-  const [fee, setFee] = useState(50000);
-
-  const result = Math.floor(weight * price * (purity / 24) + Number(fee));
-
-  const quickWeights = [
-    { name: "1돈", value: 3.75 },
-    { name: "2돈", value: 7.5 },
-    { name: "3돈", value: 11.25 },
-    { name: "5돈", value: 18.75 },
-    { name: "10돈", value: 37.5 },
+  const rows = [
+    ["컷팅볼 1", "한국금거래소", "24K", "3.75", "2025-05-21"],
+    ["컷팅볼 2", "삼성주얼리", "18K", "6.54", "2025-05-20"],
+    ["컷팅볼 3", "LG골드", "14K", "5.20", "2025-05-18"],
+    ["팔찌 3mm", "한국금거래소", "24K", "7.50", "2025-05-15"],
   ];
 
   return (
-    <div style={styles.wrap}>
-      <section style={styles.hero}>
-        <div style={styles.overlay}>
-          <h1 style={styles.title}>GOLD CALC</h1>
-          <p style={styles.sub}>금 판매가 계산 · 매장용 프리미엄 견적 시스템</p>
-        </div>
-      </section>
-
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <label style={styles.label}>오늘 금 시세 (1g)</label>
-          <input
-            style={styles.input}
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
+    <div style={styles.page}>
+      {/* top bar */}
+      <header style={styles.header}>
+        <div>
+          <div style={styles.logo}>💎 GOLD CALC</div>
+          <div style={styles.sub}>주얼리 판매가 계산 시스템</div>
         </div>
 
-        <div style={styles.card}>
-          <label style={styles.label}>빠른 중량 선택</label>
-          <div style={styles.grid}>
-            {quickWeights.map((item) => (
-              <button
-                key={item.name}
-                style={styles.btn}
-                onClick={() => setWeight(item.value)}
-              >
-                {item.name}
-              </button>
-            ))}
-          </div>
+        <nav style={styles.nav}>
+          <span>계산하기</span>
+          <span>재고관리</span>
+          <span>시세관리</span>
+          <span>설정</span>
+        </nav>
 
-          <label style={{ ...styles.label, marginTop: 20 }}>중량 (g)</label>
-          <input
-            style={styles.input}
-            type="number"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-          />
-        </div>
+        <button style={styles.logout}>로그아웃</button>
+      </header>
 
-        <div style={styles.double}>
+      <main style={styles.main}>
+        {/* left */}
+        <section style={styles.left}>
           <div style={styles.card}>
-            <label style={styles.label}>순도</label>
-            <select
-              style={styles.input}
-              value={purity}
-              onChange={(e) => setPurity(e.target.value)}
-            >
-              <option value="24">24K</option>
-              <option value="18">18K</option>
-              <option value="14">14K</option>
-            </select>
+            <div style={styles.title}>제품명 또는 제품코드 검색</div>
+            <input style={styles.input} placeholder="제품명 검색" />
           </div>
 
           <div style={styles.card}>
-            <label style={styles.label}>공임</label>
-            <input
-              style={styles.input}
-              type="number"
-              value={fee}
-              onChange={(e) => setFee(e.target.value)}
-            />
+            <div style={styles.title}>검색 결과</div>
+
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>제품명</th>
+                  <th>회사</th>
+                  <th>함량</th>
+                  <th>무게</th>
+                  <th>등록일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i}>
+                    {r.map((x, idx) => (
+                      <td key={idx}>{x}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
 
-        <div style={styles.result}>
-          <div style={styles.resultText}>예상 판매가</div>
-          <div style={styles.money}>{result.toLocaleString()}원</div>
-        </div>
+        {/* center */}
+        <section style={styles.center}>
+          <div style={styles.card}>
+            <div style={styles.title}>24K 시세 (원/g)</div>
 
-        <div style={styles.footer}>
-          전국 금은방 · 개인 판매 · 빠른 견적용 데모 버전
-        </div>
-      </div>
+            <div style={styles.row}>
+              <input style={styles.input} defaultValue="987000" />
+              <button style={styles.save}>저장</button>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.title}>선택한 제품 정보</div>
+
+            <div style={styles.infoGrid}>
+              <div>제품명</div><div>컷팅볼 2</div>
+              <div>회사</div><div>삼성주얼리</div>
+              <div>함량</div><div>18K</div>
+              <div>무게</div><div>6.54g</div>
+              <div>공임</div><div>75,000원</div>
+            </div>
+
+            <div style={styles.priceBox}>
+              <div>판매가</div>
+              <div style={styles.bigMoney}>2,093,134원</div>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.title}>재고관리</div>
+
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>코드</th>
+                  <th>함량</th>
+                  <th>이름</th>
+                  <th>무게</th>
+                  <th>개수</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>A24-001</td>
+                  <td>24K</td>
+                  <td>컷팅볼1</td>
+                  <td>3.75</td>
+                  <td>3</td>
+                  <td>재고중</td>
+                </tr>
+                <tr>
+                  <td>B18-002</td>
+                  <td>18K</td>
+                  <td>컷팅볼2</td>
+                  <td>6.54</td>
+                  <td>2</td>
+                  <td>재고중</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* right */}
+        <aside style={styles.right}>
+          <div style={styles.card}>
+            <div style={styles.title}>디자인 방향</div>
+            <p>남색(메인)</p>
+            <p>골드(포인트)</p>
+            <p>화이트/그레이(배경)</p>
+            <hr />
+            <p>깔끔하고 고급스러운 관리자 UI</p>
+            <p>빠른 검색 / 계산 중심</p>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }
 
 const styles = {
-  wrap: {
-    background: "#f3f4f6",
+  page: {
+    background: "#f5f6f8",
     minHeight: "100vh",
     fontFamily: "sans-serif",
   },
-  hero: {
-    height: "260px",
-    background:
-      "linear-gradient(135deg, #071a4d 0%, #0c2b7a 60%, #123a9c 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  overlay: {
-    textAlign: "center",
+  header: {
+    background: "#081f56",
     color: "white",
+    padding: "20px 30px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  title: {
-    fontSize: "64px",
-    fontWeight: "900",
-    margin: 0,
-    letterSpacing: "2px",
+  logo: { fontSize: 34, fontWeight: 900, color: "#ffd54a" },
+  sub: { fontSize: 14, opacity: 0.9 },
+  nav: {
+    display: "flex",
+    gap: 30,
+    fontWeight: 700,
+  },
+  logout: {
+    padding: "10px 16px",
+    borderRadius: 10,
+    border: "1px solid #ffd54a",
+    background: "transparent",
     color: "#ffd54a",
   },
-  sub: {
-    marginTop: "14px",
-    fontSize: "20px",
-    opacity: 0.95,
+  main: {
+    display: "grid",
+    gridTemplateColumns: "1.1fr 1.4fr 0.6fr",
+    gap: 20,
+    padding: 20,
   },
-  container: {
-    maxWidth: "900px",
-    margin: "-50px auto 0",
-    padding: "20px",
-  },
+  left: {},
+  center: {},
+  right: {},
   card: {
     background: "white",
-    borderRadius: "20px",
-    padding: "24px",
-    marginBottom: "20px",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
+    boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
   },
-  label: {
-    display: "block",
-    fontWeight: "700",
-    marginBottom: "10px",
-    fontSize: "18px",
+  title: {
+    fontWeight: 900,
+    fontSize: 20,
+    marginBottom: 15,
   },
   input: {
     width: "100%",
-    padding: "16px",
-    borderRadius: "14px",
+    padding: 14,
+    borderRadius: 10,
     border: "1px solid #ddd",
-    fontSize: "28px",
+    fontSize: 22,
     boxSizing: "border-box",
   },
-  grid: {
+  row: {
     display: "grid",
-    gridTemplateColumns: "repeat(5,1fr)",
-    gap: "10px",
+    gridTemplateColumns: "1fr 120px",
+    gap: 10,
   },
-  btn: {
-    padding: "14px",
-    borderRadius: "12px",
-    border: "1px solid #d1d5db",
-    background: "#fff",
-    fontWeight: "800",
-    fontSize: "22px",
-    cursor: "pointer",
-  },
-  double: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "20px",
-  },
-  result: {
-    background: "linear-gradient(135deg,#071a4d,#0b2b75)",
+  save: {
+    background: "#081f56",
     color: "white",
-    borderRadius: "24px",
-    padding: "40px",
-    textAlign: "center",
-    marginTop: "10px",
-    boxShadow: "0 12px 25px rgba(0,0,0,0.15)",
+    border: "none",
+    borderRadius: 10,
+    fontWeight: 800,
   },
-  resultText: {
-    fontSize: "24px",
-    opacity: 0.9,
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: 14,
   },
-  money: {
-    fontSize: "72px",
-    fontWeight: "900",
-    marginTop: "10px",
+  infoGrid: {
+    display: "grid",
+    gridTemplateColumns: "120px 1fr",
+    rowGap: 10,
+    marginBottom: 20,
+  },
+  priceBox: {
+    background: "#081f56",
+    color: "white",
+    padding: 20,
+    borderRadius: 14,
+  },
+  bigMoney: {
+    fontSize: 42,
+    fontWeight: 900,
     color: "#ffd54a",
-  },
-  footer: {
-    textAlign: "center",
-    padding: "30px",
-    color: "#666",
-    fontWeight: "600",
+    marginTop: 8,
   },
 };
+```
