@@ -1798,7 +1798,23 @@ export default function App() {
     setPurityOverride(item.purity || "24K");
     setLaborOverride(item.labor || 0);
   };
+const updateQty = (amount) => {
+  selected.qty = Math.max(0, Number(selected.qty || 0) + amount);
 
+  if (selected.qty === 0) {
+    selected.status = "품절";
+  } else {
+    selected.status = "재고중";
+  }
+
+  setSelected({ ...selected });
+};
+
+const soldOut = () => {
+  selected.qty = 0;
+  selected.status = "품절";
+  setSelected({ ...selected });
+};
   const totalQty = INVENTORY.reduce((sum, item) => sum + Number(item.qty || 0), 0);
 
   return (
@@ -1896,6 +1912,19 @@ export default function App() {
             </div>
 
             <div style={styles.priceBox}>
+              <div style={{ display:"flex", gap:"10px", margin:"18px 0" }}>
+  <button style={styles.blueBtn} onClick={() => updateQty(1)}>
+    +1 입고
+  </button>
+
+  <button style={styles.redBtn} onClick={() => updateQty(-1)}>
+    -1 판매
+  </button>
+
+  <button style={styles.grayBtn} onClick={soldOut}>
+    품절처리
+  </button>
+</div>
               <div style={styles.priceLabel}>판매가</div>
               <div style={styles.price}>{money(calc.displayPrice)}원</div>
             </div>
@@ -1920,6 +1949,35 @@ function Info({ label, value }) {
 }
 
 const styles = {
+  blueBtn:{
+  flex:1,
+  padding:"12px",
+  background:"#0b2559",
+  color:"white",
+  border:"none",
+  borderRadius:"10px",
+  fontWeight:800
+},
+
+redBtn:{
+  flex:1,
+  padding:"12px",
+  background:"#d63031",
+  color:"white",
+  border:"none",
+  borderRadius:"10px",
+  fontWeight:800
+},
+
+grayBtn:{
+  flex:1,
+  padding:"12px",
+  background:"#636e72",
+  color:"white",
+  border:"none",
+  borderRadius:"10px",
+  fontWeight:800
+},
   page: { minHeight: "100vh", background: "#f4f6f8", fontFamily: "Arial, sans-serif" },
   header: { background: "#061a3b", color: "white", padding: "22px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   logo: { color: "#f3ca62", fontSize: 36, fontWeight: 900, letterSpacing: 1 },
