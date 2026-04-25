@@ -1,0 +1,272 @@
+:root {
+  --navy-950: #051327;
+  --navy-900: #0a1f3d;
+  --navy-800: #123160;
+  --gold-500: #d4af37;
+  --gold-300: #efd789;
+  --white-100: #f7f9fc;
+  --white-200: #eef2f8;
+  --text-900: #10233f;
+  --text-700: #314763;
+  --border: #d7deea;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(140deg, #081a35 0%, #102649 55%, #f6f8fc 55%, #f6f8fc 100%);
+  color: var(--text-900);
+}
+
+.dashboard-page {
+  min-height: 100vh;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.topbar,
+.search-panel,
+.product-panel,
+.inventory-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(9, 27, 54, 0.92);
+  backdrop-filter: blur(4px);
+  color: #fff;
+}
+
+.topbar {
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo {
+  font-size: 33px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: var(--gold-300);
+}
+
+.subtitle { color: #c3d0e5; margin-top: 4px; font-size: 14px; }
+
+.menu-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.menu-tab {
+  border: 1px solid #305281;
+  background: #10294f;
+  color: #e7edf7;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.menu-tab.active {
+  border-color: var(--gold-500);
+  color: var(--gold-300);
+  background: linear-gradient(180deg, #133865, #0d2b53);
+}
+
+.header-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat-card {
+  background: #112d56;
+  border: 1px solid #244974;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.stat-card b { color: var(--gold-300); font-size: 17px; }
+.stat-card.warning b { color: #ffb38d; }
+
+.dashboard-main {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+  min-height: 430px;
+}
+
+.search-panel,
+.product-panel,
+.inventory-panel { padding: 16px; }
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panel-head h2 { margin: 0; font-size: 20px; color: #fff; }
+.panel-head span { color: #c8d6ea; font-size: 13px; }
+
+.field {
+  width: 100%;
+  border: 1px solid #2a4f7e;
+  background: #0f2c53;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+
+.product-list {
+  margin-top: 12px;
+  max-height: 470px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-item {
+  border: 1px solid #2d4f79;
+  background: #102a50;
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-item.active {
+  border-color: var(--gold-500);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.22), rgba(16, 42, 80, 0.95));
+}
+
+.item-top { display: flex; justify-content: space-between; }
+.badge { background: #1b3d68; border: 1px solid #567fb3; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.item-name { margin-top: 7px; font-weight: 700; }
+.item-sub { margin-top: 4px; color: #bccce3; font-size: 13px; }
+
+.product-overview {
+  display: grid;
+  grid-template-columns: 330px 1fr;
+  gap: 12px;
+}
+
+.image-wrap {
+  border-radius: 16px;
+  border: 1px solid #45638c;
+  min-height: 220px;
+  padding: 14px;
+  background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.33), rgba(14, 41, 76, 1));
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.image-chip {
+  align-self: flex-start;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: rgba(8, 20, 40, 0.7);
+  border: 1px solid var(--gold-500);
+  color: var(--gold-300);
+}
+
+.image-title { margin-top: 10px; color: #e3ebf8; font-weight: 600; }
+.image-name { font-size: 23px; font-weight: 800; margin-top: 2px; }
+.image-meta { color: #d2ddee; margin-top: 10px; font-size: 14px; }
+
+.info-grid {
+  border: 1px solid #2e4f79;
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 14px;
+  background: #0e2a4f;
+}
+
+.info-row {
+  padding: 9px 0;
+  border-bottom: 1px solid #284772;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.info-row span { color: #b8c8de; }
+
+.calc-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.calc-card {
+  border: 1px solid #2d4f7d;
+  background: #0f2b52;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.calc-card label { display: block; margin-bottom: 8px; color: #d8e3f3; font-size: 13px; font-weight: 600; }
+
+.price-box {
+  margin-top: 12px;
+  border: 1px solid var(--gold-500);
+  background: linear-gradient(120deg, rgba(8, 23, 47, 0.95), rgba(19, 52, 94, 0.9));
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.price-label { color: #d8e4f7; font-weight: 700; }
+.price-value { color: var(--gold-300); font-weight: 900; font-size: 44px; margin-top: 4px; }
+.formula { margin-top: 8px; color: #dde6f7; font-size: 14px; line-height: 1.45; }
+
+.inventory-panel {
+  background: #f9fbff;
+  color: var(--text-900);
+  border: 1px solid var(--border);
+}
+
+.inventory-panel .panel-head h2 { color: var(--text-900); }
+.inventory-panel .panel-head span { color: var(--text-700); }
+
+.table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
+
+table { width: 100%; border-collapse: collapse; min-width: 980px; }
+th, td { padding: 10px 11px; border-bottom: 1px solid #e6ebf4; text-align: left; font-size: 14px; }
+thead th { background: #e9effa; color: #233b62; position: sticky; top: 0; z-index: 1; }
+.selected-row { background: #fff4d3; }
+
+@media (max-width: 1240px) {
+  .topbar { grid-template-columns: 1fr; }
+  .dashboard-main { grid-template-columns: 1fr; }
+  .product-overview { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .dashboard-page { padding: 10px; }
+  .logo { font-size: 25px; }
+  .header-stats { grid-template-columns: 1fr 1fr; }
+  .calc-grid,
+  .info-grid { grid-template-columns: 1fr; }
+  .price-value { font-size: 33px; }
+}
