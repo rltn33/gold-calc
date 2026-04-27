@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const INVENTORY = [
@@ -1776,39 +1776,207 @@ function productImageAlt(product) {
 
 export default function App() {
   const [keyword, setKeyword] = useState("");
-  const [selected, setSelected] = useState(INVENTORY[0]);
-  const [marketPrice, setMarketPrice] = useState(987000);
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-inventory-v1");
+    if (!saved) {
+      return INVENTORY.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    }
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) throw new Error("invalid");
+      return parsed.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    } catch {
+      return INVENTORY.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    }
+  });
+  const [salesLog, setSalesLog] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-sales-log-v1");
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedCode, setSelectedCode] = useState(INVENTORY[0]?.code || "");
+  const [marketPrice, setMarketPrice] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-market-price-v1");
+    return saved ? Number(saved) : 987000;
+  });
+  const [marketHistory, setMarketHistory] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-market-history-v1");
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
   const [laborOverride, setLaborOverride] = useState(0);
   const [purityOverride, setPurityOverride] = useState(INVENTORY[0]?.purity || "24K");
+  const [marginSettings, setMarginSettings] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-margin-settings-v1");
+    const defaultMargins = {
+      "24K": PURITY["24K"].margin,
+      "18K": PURITY["18K"].margin,
+      "14K": PURITY["14K"].margin,
+    };
+
+    if (!saved) return defaultMargins;
+
+    try {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaultMargins,
+        ...parsed,
+      };
+    } catch {
+      return defaultMargins;
+    }
+  });
+  const [stockInput, setStockInput] = useState(INVENTORY[0]?.qty || 0);
   const [activeMenu, setActiveMenu] = useState(MENU_ITEMS[0]);
+
+  const selected = useMemo(() => {
+    return inventory.find((item) => item.code === selectedCode) || inventory[0] || INVENTORY[0];
+  }, [inventory, selectedCode]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-inventory-v1", JSON.stringify(inventory));
+  }, [inventory]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-sales-log-v1", JSON.stringify(salesLog));
+  }, [salesLog]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-market-price-v1", String(marketPrice));
+  }, [marketPrice]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-market-history-v1", JSON.stringify(marketHistory));
+  }, [marketHistory]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-margin-settings-v1", JSON.stringify(marginSettings));
+  }, [marginSettings]);
+
+  useEffect(() => {
+    if (!selected) return;
+    setPurityOverride(selected.purity || "24K");
+    setLaborOverride(selected.labor || 0);
+    setStockInput(Number(selected.qty || 0));
+  }, [selectedCode]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
-    if (!q) return INVENTORY;
-    return INVENTORY.filter((item) =>
+    if (!q) return inventory;
+    return inventory.filter((item) =>
       [item.code, item.purity, item.type, item.name, item.company, item.model, item.status]
         .join(" ")
         .toLowerCase()
         .includes(q)
     );
-  }, [keyword]);
+  }, [keyword, inventory]);
 
   const calc = useMemo(() => {
-    const purity = PURITY[purityOverride] || PURITY[selected.purity] || PURITY["24K"];
+    const purityKey = purityOverride || selected.purity || "24K";
+    const purity = PURITY[purityKey] || PURITY[selected.purity] || PURITY["24K"];
+    const margin = Number(marginSettings[purityKey] || purity.margin || 1);
     const labor = Number(laborOverride || selected.labor || 0);
     const base = (Number(selected.weight || 0) / 3.75) * purity.factor * Number(marketPrice || 0) + labor;
-    const finalPrice = base * purity.margin;
-    return { base, finalPrice, displayPrice: floorThousand(finalPrice), factor: purity.factor, margin: purity.margin, labor };
-  }, [selected, marketPrice, laborOverride, purityOverride]);
+    const finalPrice = base * margin;
+    return { base, finalPrice, displayPrice: floorThousand(finalPrice), factor: purity.factor, margin, labor };
+  }, [selected, marketPrice, laborOverride, purityOverride, marginSettings]);
 
-  const chooseProduct = (item) => {
-    setSelected(item);
-    setPurityOverride(item.purity || "24K");
-    setLaborOverride(item.labor || 0);
+  const updateStock = (nextQty) => {
+    const safeQty = Math.max(0, Number(nextQty || 0));
+    setInventory((prev) =>
+      prev.map((item) =>
+        item.code === selected.code
+          ? {
+              ...item,
+              qty: safeQty,
+              status: safeQty <= 0 ? "품절" : "재고중",
+            }
+          : item
+      )
+    );
+    setStockInput(safeQty);
   };
 
-  const totalQty = INVENTORY.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  const lowStockCount = INVENTORY.filter((item) => Number(item.qty || 0) <= 1).length;
+  const chooseProduct = (item) => {
+    setSelectedCode(item.code);
+    setPurityOverride(item.purity || "24K");
+    setLaborOverride(item.labor || 0);
+    setStockInput(Number(item.qty || 0));
+  };
+
+  const completeSale = () => {
+    if (!selected || Number(selected.qty || 0) <= 0) return;
+
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = now.toTimeString().slice(0, 8);
+    const nextQty = Number(selected.qty || 0) - 1;
+
+    updateStock(nextQty);
+
+    setSalesLog((prev) => [
+      {
+        date,
+        time,
+        name: selected.name,
+        code: selected.code,
+        amount: calc.displayPrice,
+        purity: purityOverride,
+      },
+      ...prev,
+    ]);
+  };
+
+  const saveTodayMarketPrice = () => {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = now.toTimeString().slice(0, 8);
+    setMarketHistory((prev) => [
+      {
+        date,
+        time,
+        price: Number(marketPrice || 0),
+      },
+      ...prev,
+    ]);
+  };
+
+  const updateMargin = (purity, value) => {
+    setMarginSettings((prev) => ({
+      ...prev,
+      [purity]: Number(value || 0),
+    }));
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySalesTotal = salesLog
+    .filter((log) => log.date === today)
+    .reduce((sum, log) => sum + Number(log.amount || 0), 0);
+
+  const totalQty = inventory.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  const lowStockCount = inventory.filter((item) => Number(item.qty || 0) <= 1).length;
+  const recentSales = salesLog.slice(0, 10);
+  const recentMarketHistory = marketHistory.slice(0, 10);
 
   return (
     <div className="dashboard-page">
@@ -1831,8 +1999,12 @@ export default function App() {
         </nav>
         <div className="header-stats">
           <div className="stat-card">
+            <span>오늘 매출 합계</span>
+            <b>{money(todaySalesTotal)}원</b>
+          </div>
+          <div className="stat-card">
             <span>등록 제품</span>
-            <b>{INVENTORY.length}개</b>
+            <b>{inventory.length}개</b>
           </div>
           <div className="stat-card">
             <span>총 수량</span>
@@ -1870,7 +2042,7 @@ export default function App() {
                   <span className="badge">{item.purity}</span>
                 </div>
                 <div className="item-name">{item.type} · {item.name}</div>
-                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개</div>
+                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개 ({item.status})</div>
               </button>
             ))}
           </div>
@@ -1882,66 +2054,173 @@ export default function App() {
             <span>{activeMenu}</span>
           </div>
 
-          <div className="product-overview">
-            <div className="image-wrap" role="img" aria-label={productImageAlt(selected)}>
-              <div className="image-chip">{selected.purity}</div>
-              <div className="image-title">{selected.type}</div>
-              <div className="image-name">{selected.name}</div>
-              <div className="image-meta">{selected.weight}g · 코드 {selected.code}</div>
-            </div>
+          {activeMenu === "시세관리" ? (
+            <div className="market-manage-wrap">
+              <div className="calc-grid">
+                <div className="calc-card">
+                  <label>오늘 24K 시세(원/돈)</label>
+                  <input
+                    className="field"
+                    type="number"
+                    value={marketPrice}
+                    onChange={(e) => setMarketPrice(e.target.value)}
+                  />
+                  <button type="button" className="sale-button" onClick={saveTodayMarketPrice}>오늘 시세 저장</button>
+                </div>
+                <div className="calc-card">
+                  <label>24K 기본 마진</label>
+                  <input
+                    className="field"
+                    type="number"
+                    step="0.01"
+                    value={marginSettings["24K"]}
+                    onChange={(e) => updateMargin("24K", e.target.value)}
+                  />
+                </div>
+                <div className="calc-card">
+                  <label>18K 기본 마진</label>
+                  <input
+                    className="field"
+                    type="number"
+                    step="0.01"
+                    value={marginSettings["18K"]}
+                    onChange={(e) => updateMargin("18K", e.target.value)}
+                  />
+                </div>
+                <div className="calc-card">
+                  <label>14K 기본 마진</label>
+                  <input
+                    className="field"
+                    type="number"
+                    step="0.01"
+                    value={marginSettings["14K"]}
+                    onChange={(e) => updateMargin("14K", e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <div className="info-grid">
-              <Info label="제품코드" value={selected.code} />
-              <Info label="제품명" value={`${selected.type} · ${selected.name}`} />
-              <Info label="회사" value={selected.company || "미입력"} />
-              <Info label="모델명" value={selected.model || "-"} />
-              <Info label="등록 함량" value={selected.purity} />
-              <Info label="계산 함량" value={purityOverride} />
-              <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
-              <Info label="재고" value={`${selected.qty}개 / ${selected.status}`} />
+              <div className="table-wrap market-history-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>날짜</th>
+                      <th>시간</th>
+                      <th>시세(원/돈)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentMarketHistory.length > 0 ? (
+                      recentMarketHistory.map((item, idx) => (
+                        <tr key={`market-${item.date}-${item.time}-${idx}`}>
+                          <td>{item.date}</td>
+                          <td>{item.time}</td>
+                          <td>{money(item.price)}원</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3}>변경 이력이 없습니다.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="product-overview">
+                <div className="image-wrap" role="img" aria-label={productImageAlt(selected)}>
+                  <div className="image-chip">{selected.purity}</div>
+                  <div className="image-title">{selected.type}</div>
+                  <div className="image-name">{selected.name}</div>
+                  <div className="image-meta">{selected.weight}g · 코드 {selected.code}</div>
+                </div>
 
-          <div className="calc-grid">
-            <div className="calc-card">
-              <label>24K 시세(원/돈)</label>
-              <input
-                className="field"
-                type="number"
-                value={marketPrice}
-                onChange={(e) => setMarketPrice(e.target.value)}
-              />
-            </div>
-            <div className="calc-card">
-              <label>순도 변경</label>
-              <select
-                className="field"
-                value={purityOverride}
-                onChange={(e) => setPurityOverride(e.target.value)}
-              >
-                <option value="24K">24K</option>
-                <option value="18K">18K</option>
-                <option value="14K">14K</option>
-              </select>
-            </div>
-            <div className="calc-card">
-              <label>공임</label>
-              <input
-                className="field"
-                type="number"
-                value={laborOverride}
-                onChange={(e) => setLaborOverride(e.target.value)}
-              />
-            </div>
-          </div>
+                <div className="info-grid">
+                  <Info label="제품코드" value={selected.code} />
+                  <Info label="제품명" value={`${selected.type} · ${selected.name}`} />
+                  <Info label="회사" value={selected.company || "미입력"} />
+                  <Info label="모델명" value={selected.model || "-"} />
+                  <Info label="등록 함량" value={selected.purity} />
+                  <Info label="계산 함량" value={purityOverride} />
+                  <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
+                  <Info label="재고" value={`${selected.qty}개 / ${selected.status}`} />
+                </div>
+              </div>
 
-          <div className="price-box">
-            <div className="price-label">판매가</div>
-            <div className="price-value">{money(calc.displayPrice)}원</div>
-            <div className="formula">
-              ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
-            </div>
-          </div>
+              <div className="calc-grid">
+                <div className="calc-card">
+                  <label>24K 시세(원/돈)</label>
+                  <input
+                    className="field"
+                    type="number"
+                    value={marketPrice}
+                    onChange={(e) => setMarketPrice(e.target.value)}
+                  />
+                </div>
+                <div className="calc-card">
+                  <label>순도 변경</label>
+                  <select
+                    className="field"
+                    value={purityOverride}
+                    onChange={(e) => setPurityOverride(e.target.value)}
+                  >
+                    <option value="24K">24K</option>
+                    <option value="18K">18K</option>
+                    <option value="14K">14K</option>
+                  </select>
+                </div>
+                <div className="calc-card">
+                  <label>공임</label>
+                  <input
+                    className="field"
+                    type="number"
+                    value={laborOverride}
+                    onChange={(e) => setLaborOverride(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="price-box">
+                <div className="price-label">판매가</div>
+                <div className="price-value">{money(calc.displayPrice)}원</div>
+                <div className="formula">
+                  ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
+                </div>
+                <button
+                  type="button"
+                  className="sale-button"
+                  onClick={completeSale}
+                  disabled={Number(selected.qty || 0) <= 0}
+                >
+                  판매 완료
+                </button>
+
+                <div className="stock-adjust-wrap">
+                  <div className="price-label">재고 수동 조정</div>
+                  <div className="stock-adjust-row">
+                    <button type="button" className="adjust-btn" onClick={() => updateStock(Number(selected.qty || 0) + 1)}>+1</button>
+                    <button
+                      type="button"
+                      className="adjust-btn"
+                      onClick={() => updateStock(Number(selected.qty || 0) - 1)}
+                      disabled={Number(selected.qty || 0) <= 0}
+                    >
+                      -1
+                    </button>
+                    <input
+                      className="field stock-input"
+                      type="number"
+                      min="0"
+                      value={stockInput}
+                      onChange={(e) => setStockInput(e.target.value)}
+                    />
+                    <button type="button" className="adjust-btn" onClick={() => updateStock(stockInput)}>직접 입력</button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </section>
       </main>
 
@@ -1981,6 +2260,45 @@ export default function App() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="sales-log-wrap">
+          <div className="panel-head sales-head">
+            <h2>최근 판매 내역</h2>
+            <span>최근 10건</span>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>제품명</th>
+                  <th>코드</th>
+                  <th>금액</th>
+                  <th>순도</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentSales.length > 0 ? (
+                  recentSales.map((log, idx) => (
+                    <tr key={`${log.date}-${log.time}-${log.code}-${idx}`}>
+                      <td>{log.date}</td>
+                      <td>{log.time}</td>
+                      <td>{log.name}</td>
+                      <td>{log.code}</td>
+                      <td>{money(log.amount)}원</td>
+                      <td>{log.purity}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6}>판매 내역이 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>

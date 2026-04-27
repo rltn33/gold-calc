@@ -81,7 +81,7 @@ body {
 
 .header-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -249,6 +249,74 @@ body {
 .inventory-panel .panel-head h2 { color: var(--text-900); }
 .inventory-panel .panel-head span { color: var(--text-700); }
 
+
+.sale-button {
+  margin-top: 14px;
+  width: 100%;
+  border: 1px solid var(--gold-500);
+  background: linear-gradient(180deg, #d4af37, #b8942e);
+  color: #11223f;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sale-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sales-log-wrap {
+  margin-top: 14px;
+}
+
+.sales-head {
+  margin-bottom: 8px;
+}
+
+.market-manage-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.market-history-table {
+  margin-top: 4px;
+}
+
+.stock-adjust-wrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(239, 215, 137, 0.35);
+}
+
+.stock-adjust-row {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 70px 70px 1fr 96px;
+  gap: 8px;
+}
+
+.adjust-btn {
+  border: 1px solid #496a95;
+  background: #12325e;
+  color: #e8effa;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.adjust-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stock-input {
+  min-width: 0;
+}
+
 .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
 
 table { width: 100%; border-collapse: collapse; min-width: 980px; }
@@ -268,5 +336,6 @@ thead th { background: #e9effa; color: #233b62; position: sticky; top: 0; z-inde
   .header-stats { grid-template-columns: 1fr 1fr; }
   .calc-grid,
   .info-grid { grid-template-columns: 1fr; }
+  .stock-adjust-row { grid-template-columns: 1fr 1fr; }
   .price-value { font-size: 33px; }
 }
