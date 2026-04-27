@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 const INVENTORY = [
@@ -1776,22 +1776,73 @@ function productImageAlt(product) {
 
 export default function App() {
   const [keyword, setKeyword] = useState("");
-  const [selected, setSelected] = useState(INVENTORY[0]);
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-inventory-v1");
+    if (!saved) {
+      return INVENTORY.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    }
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) throw new Error("invalid");
+      return parsed.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    } catch {
+      return INVENTORY.map((item) => ({
+        ...item,
+        status: Number(item.qty || 0) <= 0 ? "품절" : "재고중",
+      }));
+    }
+  });
+  const [salesLog, setSalesLog] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-sales-log-v1");
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedCode, setSelectedCode] = useState(INVENTORY[0]?.code || "");
   const [marketPrice, setMarketPrice] = useState(987000);
   const [laborOverride, setLaborOverride] = useState(0);
   const [purityOverride, setPurityOverride] = useState(INVENTORY[0]?.purity || "24K");
   const [activeMenu, setActiveMenu] = useState(MENU_ITEMS[0]);
 
+  const selected = useMemo(() => {
+    return inventory.find((item) => item.code === selectedCode) || inventory[0] || INVENTORY[0];
+  }, [inventory, selectedCode]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-inventory-v1", JSON.stringify(inventory));
+  }, [inventory]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-sales-log-v1", JSON.stringify(salesLog));
+  }, [salesLog]);
+
+  useEffect(() => {
+    if (!selected) return;
+    setPurityOverride(selected.purity || "24K");
+    setLaborOverride(selected.labor || 0);
+  }, [selectedCode]);
+
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
-    if (!q) return INVENTORY;
-    return INVENTORY.filter((item) =>
+    if (!q) return inventory;
+    return inventory.filter((item) =>
       [item.code, item.purity, item.type, item.name, item.company, item.model, item.status]
         .join(" ")
         .toLowerCase()
         .includes(q)
     );
-  }, [keyword]);
+  }, [keyword, inventory]);
 
   const calc = useMemo(() => {
     const purity = PURITY[purityOverride] || PURITY[selected.purity] || PURITY["24K"];
@@ -1802,13 +1853,53 @@ export default function App() {
   }, [selected, marketPrice, laborOverride, purityOverride]);
 
   const chooseProduct = (item) => {
-    setSelected(item);
+    setSelectedCode(item.code);
     setPurityOverride(item.purity || "24K");
     setLaborOverride(item.labor || 0);
   };
 
-  const totalQty = INVENTORY.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  const lowStockCount = INVENTORY.filter((item) => Number(item.qty || 0) <= 1).length;
+  const completeSale = () => {
+    if (!selected || Number(selected.qty || 0) <= 0) return;
+
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = now.toTimeString().slice(0, 8);
+
+    const nextQty = Number(selected.qty || 0) - 1;
+
+    setInventory((prev) =>
+      prev.map((item) =>
+        item.code === selected.code
+          ? {
+              ...item,
+              qty: nextQty,
+              status: nextQty <= 0 ? "품절" : "재고중",
+            }
+          : item
+      )
+    );
+
+    setSalesLog((prev) => [
+      {
+        date,
+        time,
+        name: selected.name,
+        code: selected.code,
+        amount: calc.displayPrice,
+        purity: purityOverride,
+      },
+      ...prev,
+    ]);
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySalesTotal = salesLog
+    .filter((log) => log.date === today)
+    .reduce((sum, log) => sum + Number(log.amount || 0), 0);
+
+  const totalQty = inventory.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  const lowStockCount = inventory.filter((item) => Number(item.qty || 0) <= 1).length;
+  const recentSales = salesLog.slice(0, 10);
 
   return (
     <div className="dashboard-page">
@@ -1831,8 +1922,12 @@ export default function App() {
         </nav>
         <div className="header-stats">
           <div className="stat-card">
+            <span>오늘 매출 합계</span>
+            <b>{money(todaySalesTotal)}원</b>
+          </div>
+          <div className="stat-card">
             <span>등록 제품</span>
-            <b>{INVENTORY.length}개</b>
+            <b>{inventory.length}개</b>
           </div>
           <div className="stat-card">
             <span>총 수량</span>
@@ -1870,7 +1965,7 @@ export default function App() {
                   <span className="badge">{item.purity}</span>
                 </div>
                 <div className="item-name">{item.type} · {item.name}</div>
-                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개</div>
+                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개 ({item.status})</div>
               </button>
             ))}
           </div>
@@ -1941,6 +2036,14 @@ export default function App() {
             <div className="formula">
               ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
             </div>
+            <button
+              type="button"
+              className="sale-button"
+              onClick={completeSale}
+              disabled={Number(selected.qty || 0) <= 0}
+            >
+              판매 완료
+            </button>
           </div>
         </section>
       </main>
@@ -1981,6 +2084,45 @@ export default function App() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="sales-log-wrap">
+          <div className="panel-head sales-head">
+            <h2>최근 판매 내역</h2>
+            <span>최근 10건</span>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>제품명</th>
+                  <th>코드</th>
+                  <th>금액</th>
+                  <th>순도</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentSales.length > 0 ? (
+                  recentSales.map((log, idx) => (
+                    <tr key={`${log.date}-${log.time}-${log.code}-${idx}`}>
+                      <td>{log.date}</td>
+                      <td>{log.time}</td>
+                      <td>{log.name}</td>
+                      <td>{log.code}</td>
+                      <td>{money(log.amount)}원</td>
+                      <td>{log.purity}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6}>판매 내역이 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>
