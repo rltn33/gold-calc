@@ -1754,10 +1754,16 @@ const INVENTORY = [
   }
 ];
 
-const PURITY = {
-  "24K": { factor: 1, margin: 1 },
-  "18K": { factor: 0.825, margin: 1.4 },
-  "14K": { factor: 0.644, margin: 1.4 },
+const PURITY_FACTOR = {
+  "24K": 1,
+  "18K": 0.825,
+  "14K": 0.644,
+};
+
+const DEFAULT_MARGIN_BY_PURITY = {
+  "24K": 1,
+  "18K": 1.4,
+  "14K": 1.4,
 };
 
 const MENU_ITEMS = ["계산하기", "재고관리", "시세관리", "설정"];
@@ -1810,10 +1816,33 @@ export default function App() {
     }
   });
   const [selectedCode, setSelectedCode] = useState(INVENTORY[0]?.code || "");
-  const [marketPrice, setMarketPrice] = useState(987000);
+  const [marketPrice, setMarketPrice] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-market-price-v1");
+    return saved ? Number(saved) || 987000 : 987000;
+  });
   const [laborOverride, setLaborOverride] = useState(0);
   const [purityOverride, setPurityOverride] = useState(INVENTORY[0]?.purity || "24K");
   const [activeMenu, setActiveMenu] = useState(MENU_ITEMS[0]);
+  const [marginByPurity, setMarginByPurity] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-margin-by-purity-v1");
+    if (!saved) return DEFAULT_MARGIN_BY_PURITY;
+    try {
+      const parsed = JSON.parse(saved);
+      return { ...DEFAULT_MARGIN_BY_PURITY, ...parsed };
+    } catch {
+      return DEFAULT_MARGIN_BY_PURITY;
+    }
+  });
+  const [marketSnapshots, setMarketSnapshots] = useState(() => {
+    const saved = localStorage.getItem("gold-calc-market-snapshots-v1");
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   const selected = useMemo(() => {
     return inventory.find((item) => item.code === selectedCode) || inventory[0] || INVENTORY[0];
@@ -1826,6 +1855,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("gold-calc-sales-log-v1", JSON.stringify(salesLog));
   }, [salesLog]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-market-price-v1", String(Number(marketPrice || 0)));
+  }, [marketPrice]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-margin-by-purity-v1", JSON.stringify(marginByPurity));
+  }, [marginByPurity]);
+
+  useEffect(() => {
+    localStorage.setItem("gold-calc-market-snapshots-v1", JSON.stringify(marketSnapshots));
+  }, [marketSnapshots]);
 
   useEffect(() => {
     if (!selected) return;
@@ -1845,17 +1886,55 @@ export default function App() {
   }, [keyword, inventory]);
 
   const calc = useMemo(() => {
-    const purity = PURITY[purityOverride] || PURITY[selected.purity] || PURITY["24K"];
+    const factor = PURITY_FACTOR[purityOverride] || PURITY_FACTOR[selected.purity] || PURITY_FACTOR["24K"];
+    const margin = Number(marginByPurity[purityOverride] || 1);
     const labor = Number(laborOverride || selected.labor || 0);
-    const base = (Number(selected.weight || 0) / 3.75) * purity.factor * Number(marketPrice || 0) + labor;
-    const finalPrice = base * purity.margin;
-    return { base, finalPrice, displayPrice: floorThousand(finalPrice), factor: purity.factor, margin: purity.margin, labor };
-  }, [selected, marketPrice, laborOverride, purityOverride]);
+    const base = (Number(selected.weight || 0) / 3.75) * factor * Number(marketPrice || 0) + labor;
+    const finalPrice = base * margin;
+    return { base, finalPrice, displayPrice: floorThousand(finalPrice), factor, margin, labor };
+  }, [selected, marketPrice, laborOverride, purityOverride, marginByPurity]);
 
   const chooseProduct = (item) => {
     setSelectedCode(item.code);
     setPurityOverride(item.purity || "24K");
     setLaborOverride(item.labor || 0);
+  };
+
+  const adjustInventoryQty = (code, delta) => {
+    setInventory((prev) =>
+      prev.map((item) => {
+        if (item.code !== code) return item;
+        const nextQty = Math.max(0, Number(item.qty || 0) + delta);
+        return {
+          ...item,
+          qty: nextQty,
+          status: nextQty <= 0 ? "품절" : "재고중",
+        };
+      })
+    );
+  };
+
+  const saveMarketSnapshot = () => {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = now.toTimeString().slice(0, 8);
+
+    setMarketSnapshots((prev) => [
+      {
+        date,
+        time,
+        marketPrice: Number(marketPrice || 0),
+      },
+      ...prev.slice(0, 19),
+    ]);
+  };
+
+  const updateMargin = (purity, value) => {
+    const next = Number(value);
+    setMarginByPurity((prev) => ({
+      ...prev,
+      [purity]: Number.isFinite(next) && next > 0 ? next : 1,
+    }));
   };
 
   const completeSale = () => {
@@ -1865,19 +1944,7 @@ export default function App() {
     const date = now.toISOString().slice(0, 10);
     const time = now.toTimeString().slice(0, 8);
 
-    const nextQty = Number(selected.qty || 0) - 1;
-
-    setInventory((prev) =>
-      prev.map((item) =>
-        item.code === selected.code
-          ? {
-              ...item,
-              qty: nextQty,
-              status: nextQty <= 0 ? "품절" : "재고중",
-            }
-          : item
-      )
-    );
+    adjustInventoryQty(selected.code, -1);
 
     setSalesLog((prev) => [
       {
@@ -1900,6 +1967,7 @@ export default function App() {
   const totalQty = inventory.reduce((sum, item) => sum + Number(item.qty || 0), 0);
   const lowStockCount = inventory.filter((item) => Number(item.qty || 0) <= 1).length;
   const recentSales = salesLog.slice(0, 10);
+  const recentMarketSnapshots = marketSnapshots.slice(0, 10);
 
   return (
     <div className="dashboard-page">
@@ -2000,12 +2068,15 @@ export default function App() {
           <div className="calc-grid">
             <div className="calc-card">
               <label>24K 시세(원/돈)</label>
-              <input
-                className="field"
-                type="number"
-                value={marketPrice}
-                onChange={(e) => setMarketPrice(e.target.value)}
-              />
+              <div className="inline-field-wrap">
+                <input
+                  className="field"
+                  type="number"
+                  value={marketPrice}
+                  onChange={(e) => setMarketPrice(e.target.value)}
+                />
+                <button type="button" className="sub-button" onClick={saveMarketSnapshot}>시세 저장</button>
+              </div>
             </div>
             <div className="calc-card">
               <label>순도 변경</label>
@@ -2028,6 +2099,22 @@ export default function App() {
                 onChange={(e) => setLaborOverride(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="margin-grid">
+            {Object.keys(DEFAULT_MARGIN_BY_PURITY).map((purity) => (
+              <div className="calc-card" key={`margin-${purity}`}>
+                <label>{purity} 마진 배수</label>
+                <input
+                  className="field"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={marginByPurity[purity]}
+                  onChange={(e) => updateMargin(purity, e.target.value)}
+                />
+              </div>
+            ))}
           </div>
 
           <div className="price-box">
@@ -2063,6 +2150,7 @@ export default function App() {
                 <th>순도</th>
                 <th>무게(g)</th>
                 <th>수량</th>
+                <th>조정</th>
                 <th>회사</th>
                 <th>상태</th>
                 <th>입고일</th>
@@ -2077,6 +2165,12 @@ export default function App() {
                   <td>{item.purity}</td>
                   <td>{item.weight}</td>
                   <td>{item.qty}</td>
+                  <td>
+                    <div className="qty-adjust">
+                      <button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, -1)}>-</button>
+                      <button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, 1)}>+</button>
+                    </div>
+                  </td>
                   <td>{item.company}</td>
                   <td>{item.status}</td>
                   <td>{item.date}</td>
@@ -2087,6 +2181,37 @@ export default function App() {
         </div>
 
         <div className="sales-log-wrap">
+          <div className="panel-head sales-head">
+            <h2>저장된 시세 내역</h2>
+            <span>최근 10건</span>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>24K 시세(원/돈)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentMarketSnapshots.length > 0 ? (
+                  recentMarketSnapshots.map((snap, idx) => (
+                    <tr key={`${snap.date}-${snap.time}-${idx}`}>
+                      <td>{snap.date}</td>
+                      <td>{snap.time}</td>
+                      <td>{money(snap.marketPrice)}원</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3}>저장된 시세가 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
           <div className="panel-head sales-head">
             <h2>최근 판매 내역</h2>
             <span>최근 10건</span>

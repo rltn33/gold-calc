@@ -278,6 +278,47 @@ body {
 
 .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
 
+
+.inline-field-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sub-button {
+  border: 1px solid #4d6f9a;
+  background: #13345d;
+  color: #d8e4f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.margin-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.qty-adjust {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.qty-btn {
+  min-width: 30px;
+  border: 1px solid #c8d4e7;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+  color: #21406b;
+}
+
 table { width: 100%; border-collapse: collapse; min-width: 980px; }
 th, td { padding: 10px 11px; border-bottom: 1px solid #e6ebf4; text-align: left; font-size: 14px; }
 thead th { background: #e9effa; color: #233b62; position: sticky; top: 0; z-index: 1; }
@@ -294,6 +335,7 @@ thead th { background: #e9effa; color: #233b62; position: sticky; top: 0; z-inde
   .logo { font-size: 25px; }
   .header-stats { grid-template-columns: 1fr 1fr; }
   .calc-grid,
-  .info-grid { grid-template-columns: 1fr; }
+  .info-grid,
+  .margin-grid { grid-template-columns: 1fr; }
   .price-value { font-size: 33px; }
 }
