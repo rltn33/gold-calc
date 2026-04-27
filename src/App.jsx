@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import "./App.css";
 
 const INVENTORY = [
   {
@@ -1759,6 +1760,8 @@ const PURITY = {
   "14K": { factor: 0.644, margin: 1.4 },
 };
 
+const MENU_ITEMS = ["계산하기", "재고관리", "시세관리", "설정"];
+
 function money(value) {
   return Number(value || 0).toLocaleString("ko-KR");
 }
@@ -1767,12 +1770,17 @@ function floorThousand(value) {
   return Math.floor(Number(value || 0) / 1000) * 1000;
 }
 
+function productImageAlt(product) {
+  return `${product.type} ${product.name}`;
+}
+
 export default function App() {
   const [keyword, setKeyword] = useState("");
   const [selected, setSelected] = useState(INVENTORY[0]);
   const [marketPrice, setMarketPrice] = useState(987000);
   const [laborOverride, setLaborOverride] = useState(0);
   const [purityOverride, setPurityOverride] = useState(INVENTORY[0]?.purity || "24K");
+  const [activeMenu, setActiveMenu] = useState(MENU_ITEMS[0]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
@@ -1800,91 +1808,89 @@ export default function App() {
   };
 
   const totalQty = INVENTORY.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+  const lowStockCount = INVENTORY.filter((item) => Number(item.qty || 0) <= 1).length;
 
   return (
-    <div style={styles.page}>
-      <header style={styles.header}>
-        <div>
-          <div style={styles.logo}>GOLD CALC</div>
-          <div style={styles.subtitle}>실재고 125개 기반 판매가 계산 시스템</div>
+    <div className="dashboard-page">
+      <header className="topbar">
+        <div className="brand-wrap">
+          <div className="logo">GOLD CALC</div>
+          <div className="subtitle">관리자용 판매가 계산 + 재고관리 대시보드</div>
         </div>
-        <div style={styles.stats}>
-          <div>제품 {INVENTORY.length}개</div>
-          <div>총 수량 {totalQty}개</div>
+        <nav className="menu-tabs" aria-label="관리 메뉴">
+          {MENU_ITEMS.map((menu) => (
+            <button
+              key={menu}
+              type="button"
+              className={`menu-tab ${activeMenu === menu ? "active" : ""}`}
+              onClick={() => setActiveMenu(menu)}
+            >
+              {menu}
+            </button>
+          ))}
+        </nav>
+        <div className="header-stats">
+          <div className="stat-card">
+            <span>등록 제품</span>
+            <b>{INVENTORY.length}개</b>
+          </div>
+          <div className="stat-card">
+            <span>총 수량</span>
+            <b>{totalQty}개</b>
+          </div>
+          <div className="stat-card warning">
+            <span>저재고</span>
+            <b>{lowStockCount}개</b>
+          </div>
         </div>
       </header>
 
-      <main style={styles.layout}>
-        <section style={styles.panel}>
-          <div style={styles.panelHeader}>
-            <h2 style={styles.h2}>제품 검색</h2>
-            <span style={styles.count}>검색 {filtered.length}건</span>
+      <main className="dashboard-main">
+        <aside className="search-panel">
+          <div className="panel-head">
+            <h2>제품 검색</h2>
+            <span>{filtered.length}건</span>
           </div>
           <input
-            style={styles.search}
+            className="field"
             placeholder="제품명 / 코드 / 회사 / 모델명 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
-          <div style={styles.list}>
+          <div className="product-list">
             {filtered.map((item) => (
               <button
                 key={item.code}
+                type="button"
                 onClick={() => chooseProduct(item)}
-                style={{
-                  ...styles.productItem,
-                  borderColor: selected.code === item.code ? "#d8a62f" : "#e5e7eb",
-                  background: selected.code === item.code ? "#fff8e6" : "#fff",
-                }}
+                className={`product-item ${selected.code === item.code ? "active" : ""}`}
               >
-                <div style={styles.itemTop}>
+                <div className="item-top">
                   <b>{item.code}</b>
-                  <span style={styles.badge}>{item.purity}</span>
+                  <span className="badge">{item.purity}</span>
                 </div>
-                <div style={styles.itemName}>{item.type} · {item.name}</div>
-                <div style={styles.itemSub}>{item.company || "회사 미입력"} / {item.weight}g / {item.qty}개</div>
+                <div className="item-name">{item.type} · {item.name}</div>
+                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개</div>
               </button>
             ))}
           </div>
-        </section>
+        </aside>
 
-        <section style={styles.mainPanel}>
-          <div style={styles.topGrid}>
-            <div style={styles.card}>
-              <label style={styles.label}>24K 시세(원/돈)</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={marketPrice}
-                onChange={(e) => setMarketPrice(e.target.value)}
-              />
-            </div>
-            <div style={styles.card}>
-              <label style={styles.label}>순도 변경</label>
-              <select
-                style={styles.input}
-                value={purityOverride}
-                onChange={(e) => setPurityOverride(e.target.value)}
-              >
-                <option value="24K">24K</option>
-                <option value="18K">18K</option>
-                <option value="14K">14K</option>
-              </select>
-            </div>
-            <div style={styles.card}>
-              <label style={styles.label}>공임</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={laborOverride}
-                onChange={(e) => setLaborOverride(e.target.value)}
-              />
-            </div>
+        <section className="product-panel">
+          <div className="panel-head">
+            <h2>선택 제품 정보</h2>
+            <span>{activeMenu}</span>
           </div>
 
-          <div style={styles.detailCard}>
-            <h2 style={styles.h2}>선택 제품 정보</h2>
-            <div style={styles.infoGrid}>
+          <div className="product-overview">
+            <div className="image-wrap" role="img" aria-label={productImageAlt(selected)}>
+              <div className="image-chip">{selected.purity}</div>
+              <div className="image-title">{selected.type}</div>
+              <div className="image-name">{selected.name}</div>
+              <div className="image-meta">{selected.weight}g · 코드 {selected.code}</div>
+            </div>
+
+            <div className="info-grid">
               <Info label="제품코드" value={selected.code} />
               <Info label="제품명" value={`${selected.type} · ${selected.name}`} />
               <Info label="회사" value={selected.company || "미입력"} />
@@ -1894,60 +1900,98 @@ export default function App() {
               <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
               <Info label="재고" value={`${selected.qty}개 / ${selected.status}`} />
             </div>
+          </div>
 
-            <div style={styles.priceBox}>
-              <div style={styles.priceLabel}>판매가</div>
-              <div style={styles.price}>{money(calc.displayPrice)}원</div>
+          <div className="calc-grid">
+            <div className="calc-card">
+              <label>24K 시세(원/돈)</label>
+              <input
+                className="field"
+                type="number"
+                value={marketPrice}
+                onChange={(e) => setMarketPrice(e.target.value)}
+              />
             </div>
+            <div className="calc-card">
+              <label>순도 변경</label>
+              <select
+                className="field"
+                value={purityOverride}
+                onChange={(e) => setPurityOverride(e.target.value)}
+              >
+                <option value="24K">24K</option>
+                <option value="18K">18K</option>
+                <option value="14K">14K</option>
+              </select>
+            </div>
+            <div className="calc-card">
+              <label>공임</label>
+              <input
+                className="field"
+                type="number"
+                value={laborOverride}
+                onChange={(e) => setLaborOverride(e.target.value)}
+              />
+            </div>
+          </div>
 
-            <div style={styles.formula}>
-              검산식: ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
+          <div className="price-box">
+            <div className="price-label">판매가</div>
+            <div className="price-value">{money(calc.displayPrice)}원</div>
+            <div className="formula">
+              ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
             </div>
           </div>
         </section>
       </main>
+
+      <section className="inventory-panel">
+        <div className="panel-head">
+          <h2>재고관리 테이블</h2>
+          <span>실재고 기준 정렬 없음 · 검색 결과 연동</span>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>코드</th>
+                <th>구분</th>
+                <th>제품명</th>
+                <th>순도</th>
+                <th>무게(g)</th>
+                <th>수량</th>
+                <th>회사</th>
+                <th>상태</th>
+                <th>입고일</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((item) => (
+                <tr key={`table-${item.code}`} className={selected.code === item.code ? "selected-row" : ""}>
+                  <td>{item.code}</td>
+                  <td>{item.type}</td>
+                  <td>{item.name}</td>
+                  <td>{item.purity}</td>
+                  <td>{item.weight}</td>
+                  <td>{item.qty}</td>
+                  <td>{item.company}</td>
+                  <td>{item.status}</td>
+                  <td>{item.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
 
 function Info({ label, value }) {
   return (
-    <div style={styles.infoRow}>
-      <span style={styles.infoLabel}>{label}</span>
+    <div className="info-row">
+      <span>{label}</span>
       <b>{value}</b>
     </div>
   );
 }
-
-const styles = {
-  page: { minHeight: "100vh", background: "#f4f6f8", fontFamily: "Arial, sans-serif" },
-  header: { background: "#061a3b", color: "white", padding: "22px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  logo: { color: "#f3ca62", fontSize: 36, fontWeight: 900, letterSpacing: 1 },
-  subtitle: { marginTop: 6, color: "#dbe4f0" },
-  stats: { display: "flex", gap: 16, color: "#f3ca62", fontWeight: 800 },
-  layout: { display: "grid", gridTemplateColumns: "430px 1fr", gap: 20, padding: 20 },
-  panel: { background: "white", borderRadius: 18, padding: 18, boxShadow: "0 8px 20px rgba(0,0,0,0.05)" },
-  mainPanel: { display: "flex", flexDirection: "column", gap: 18 },
-  panelHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  h2: { margin: 0, fontSize: 22, fontWeight: 900 },
-  count: { color: "#64748b", fontWeight: 700 },
-  search: { width: "100%", marginTop: 14, padding: 14, borderRadius: 12, border: "1px solid #d1d5db", fontSize: 16, boxSizing: "border-box" },
-  list: { marginTop: 14, height: "calc(100vh - 220px)", overflowY: "auto", paddingRight: 4 },
-  productItem: { width: "100%", textAlign: "left", border: "1px solid", borderRadius: 14, padding: 14, marginBottom: 10, cursor: "pointer" },
-  itemTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  badge: { background: "#061a3b", color: "#f3ca62", padding: "4px 8px", borderRadius: 999, fontSize: 12, fontWeight: 900 },
-  itemName: { marginTop: 8, fontWeight: 900, fontSize: 17 },
-  itemSub: { marginTop: 5, color: "#64748b", fontSize: 14 },
-  topGrid: { display: "grid", gridTemplateColumns: "1fr 180px 180px", gap: 14 },
-  card: { background: "white", borderRadius: 16, padding: 16, boxShadow: "0 8px 20px rgba(0,0,0,0.05)" },
-  label: { display: "block", marginBottom: 8, fontWeight: 900, color: "#334155" },
-  input: { width: "100%", padding: 13, borderRadius: 11, border: "1px solid #d1d5db", fontSize: 18, boxSizing: "border-box" },
-  detailCard: { background: "white", borderRadius: 18, padding: 22, boxShadow: "0 8px 20px rgba(0,0,0,0.05)" },
-  infoGrid: { marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px" },
-  infoRow: { display: "grid", gridTemplateColumns: "95px 1fr", borderBottom: "1px solid #f1f5f9", padding: "10px 0" },
-  infoLabel: { color: "#64748b" },
-  priceBox: { marginTop: 24, background: "linear-gradient(135deg,#061a3b,#0b2a5b)", color: "white", borderRadius: 18, padding: 24 },
-  priceLabel: { color: "#f3ca62", fontWeight: 900, fontSize: 20 },
-  price: { color: "#f8d57a", fontWeight: 900, fontSize: 52, marginTop: 8 },
-  formula: { marginTop: 16, background: "#fff8e6", border: "1px solid #f3ca62", borderRadius: 14, padding: 16, color: "#4a3410", fontWeight: 800, lineHeight: 1.5 },
-};
