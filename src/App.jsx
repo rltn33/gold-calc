@@ -1780,6 +1780,13 @@ function productImageAlt(product) {
   return `${product.type} ${product.name}`;
 }
 
+function stockState(qty) {
+  const amount = Number(qty || 0);
+  if (amount <= 0) return "품절";
+  if (amount <= 1) return "재고부족";
+  return "재고중";
+}
+
 export default function App() {
   const [keyword, setKeyword] = useState("");
   const [inventory, setInventory] = useState(() => {
@@ -1964,8 +1971,9 @@ export default function App() {
     .filter((log) => log.date === today)
     .reduce((sum, log) => sum + Number(log.amount || 0), 0);
 
-  const totalQty = inventory.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  const lowStockCount = inventory.filter((item) => Number(item.qty || 0) <= 1).length;
+  const inStockCount = inventory.filter((item) => Number(item.qty || 0) > 1).length;
+  const lowStockCount = inventory.filter((item) => Number(item.qty || 0) === 1).length;
+  const soldOutCount = inventory.filter((item) => Number(item.qty || 0) <= 0).length;
   const recentSales = salesLog.slice(0, 10);
   const recentMarketSnapshots = marketSnapshots.slice(0, 10);
 
@@ -1989,20 +1997,24 @@ export default function App() {
           ))}
         </nav>
         <div className="header-stats">
-          <div className="stat-card">
-            <span>오늘 매출 합계</span>
+          <div className="stat-card kpi-sales">
+            <span>오늘 매출</span>
             <b>{money(todaySalesTotal)}원</b>
+          </div>
+          <div className="stat-card">
+            <span>재고중</span>
+            <b>{inStockCount}개</b>
+          </div>
+          <div className="stat-card danger">
+            <span>품절</span>
+            <b>{soldOutCount}개</b>
           </div>
           <div className="stat-card">
             <span>등록 제품</span>
             <b>{inventory.length}개</b>
           </div>
-          <div className="stat-card">
-            <span>총 수량</span>
-            <b>{totalQty}개</b>
-          </div>
           <div className="stat-card warning">
-            <span>저재고</span>
+            <span>재고부족</span>
             <b>{lowStockCount}개</b>
           </div>
         </div>
@@ -2033,7 +2045,12 @@ export default function App() {
                   <span className="badge">{item.purity}</span>
                 </div>
                 <div className="item-name">{item.type} · {item.name}</div>
-                <div className="item-sub">{item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개 ({item.status})</div>
+                <div className="item-sub">
+                  {item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개
+                  <span className={`stock-badge ${stockState(item.qty) === "품절" ? "soldout" : stockState(item.qty) === "재고부족" ? "low" : "instock"}`}>
+                    {stockState(item.qty)}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -2061,7 +2078,7 @@ export default function App() {
               <Info label="등록 함량" value={selected.purity} />
               <Info label="계산 함량" value={purityOverride} />
               <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
-              <Info label="재고" value={`${selected.qty}개 / ${selected.status}`} />
+              <Info label="재고" value={`${selected.qty}개 / ${stockState(selected.qty)}`} />
             </div>
           </div>
 
@@ -2132,6 +2149,28 @@ export default function App() {
               판매 완료
             </button>
           </div>
+
+          <div className="recent-sales-card">
+            <div className="panel-head sales-head">
+              <h2>최근 판매내역</h2>
+              <span>최신 5건</span>
+            </div>
+            {recentSales.slice(0, 5).length > 0 ? (
+              <div className="recent-sales-list">
+                {recentSales.slice(0, 5).map((log, idx) => (
+                  <div className="recent-sale-item" key={`quick-sale-${log.date}-${log.time}-${log.code}-${idx}`}>
+                    <div>
+                      <b>{log.name}</b>
+                      <div>{log.date} {log.time}</div>
+                    </div>
+                    <strong>{money(log.amount)}원</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="recent-sales-empty">판매 내역이 없습니다.</div>
+            )}
+          </div>
         </section>
       </main>
 
@@ -2172,7 +2211,11 @@ export default function App() {
                     </div>
                   </td>
                   <td>{item.company}</td>
-                  <td>{item.status}</td>
+                  <td>
+                    <span className={`stock-badge ${stockState(item.qty) === "품절" ? "soldout" : stockState(item.qty) === "재고부족" ? "low" : "instock"}`}>
+                      {stockState(item.qty)}
+                    </span>
+                  </td>
                   <td>{item.date}</td>
                 </tr>
               ))}
