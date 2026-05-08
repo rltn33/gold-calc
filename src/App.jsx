@@ -2150,28 +2150,29 @@ export default function App() {
             </button>
           </div>
 
-          <div className="recent-sales-card">
-            <div className="panel-head sales-head">
-              <h2>최근 판매내역</h2>
-              <span>최신 5건</span>
-            </div>
-            {recentSales.slice(0, 5).length > 0 ? (
-              <div className="recent-sales-list">
-                {recentSales.slice(0, 5).map((log, idx) => (
-                  <div className="recent-sale-item" key={`quick-sale-${log.date}-${log.time}-${log.code}-${idx}`}>
-                    <div>
-                      <b>{log.name}</b>
-                      <div>{log.date} {log.time}</div>
-                    </div>
-                    <strong>{money(log.amount)}원</strong>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="recent-sales-empty">판매 내역이 없습니다.</div>
-            )}
-          </div>
         </section>
+
+        <aside className="recent-sales-card">
+          <div className="panel-head sales-head">
+            <h2>최근 판매내역</h2>
+            <span>최신 5건</span>
+          </div>
+          {recentSales.slice(0, 5).length > 0 ? (
+            <div className="recent-sales-list">
+              {recentSales.slice(0, 5).map((log, idx) => (
+                <div className="recent-sale-item" key={`quick-sale-${log.date}-${log.time}-${log.code}-${idx}`}>
+                  <div>
+                    <b>{log.name}</b>
+                    <div>{log.date} {log.time}</div>
+                  </div>
+                  <strong>{money(log.amount)}원</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="recent-sales-empty">판매 내역이 없습니다.</div>
+          )}
+        </aside>
       </main>
 
       <section className="inventory-panel">
