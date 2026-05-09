@@ -24,12 +24,18 @@ tr.selected-row{background:#f8f1df}
 .price-box{margin-top:8px;border:1px solid #d8e0ea;border-radius:10px;padding:10px;background:#f8fbff}.price-value{font-size:30px;font-weight:800;color:#153866}.formula{font-size:12px;color:#5e6d81;margin:6px 0}
 .sale-button{border:0;background:linear-gradient(135deg,#cfa037,#e3c269);padding:9px 14px;border-radius:8px;font-weight:700}
 .summary .mini-list{display:grid;gap:6px}.mini-item{font-size:12px;padding:6px 8px;border:1px solid #e7edf5;border-radius:8px;display:flex;justify-content:space-between}
-.market-chart-wrap{border:1px solid #e7edf5;border-radius:10px;padding:8px;background:#f8fbff;margin-bottom:8px}
-.market-chart{width:100%;height:150px;display:block}
-.market-chart-line{fill:none;stroke:#2f6fcf;stroke-width:2.5}
-.market-chart-point{fill:#6b9de5}
-.market-chart-point.latest{fill:#cfa037;stroke:#fff;stroke-width:1.5}
-.chart-axis-labels{display:flex;justify-content:space-between;font-size:11px;color:#5e6d81}
+.market-chart-wrap{border:1px solid #e8dcc3;border-radius:14px;padding:10px 10px 8px;background:linear-gradient(160deg,#fffdfa 0%,#f7f3eb 45%,#f5f9ff 100%);margin-bottom:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 18px rgba(90,72,37,.08)}
+.market-chart{width:100%;height:176px;display:block}
+.market-chart-area{fill:url(#chartAreaGold)}
+.chart-grid-line{stroke:#d8e0ea;stroke-width:1;stroke-dasharray:2 4}
+.chart-y-label{font-size:9.5px;fill:#7a8498}
+.market-chart-line{fill:none;stroke:#2f6fcf;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 3px rgba(47,111,207,.25))}
+.market-chart-point{fill:#7ea4df;opacity:.75}
+.market-chart-point.latest{fill:#d0a24a;stroke:#fff;stroke-width:1.8;opacity:1;filter:drop-shadow(0 0 5px rgba(208,162,74,.55))}
+.market-chart-extreme{stroke:#fff;stroke-width:1.1}
+.market-chart-extreme.high{fill:#2959b8}
+.market-chart-extreme.low{fill:#76a3e4}
+.chart-axis-labels{display:flex;justify-content:space-between;font-size:11px;color:#5e6d81;padding:0 6px}
 .chart-trend{margin-top:6px;font-size:12px;font-weight:700}
 .chart-trend.up{color:#166534}.chart-trend.down{color:#b42318}
 .recent-price-notes{margin-top:8px}

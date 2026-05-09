@@ -2097,29 +2097,52 @@ export default function App() {
 
   const marketChart = useMemo(() => {
     if (chartSnapshots.length === 0) return null;
-    const width = 300;
-    const height = 140;
-    const padding = { top: 12, right: 12, bottom: 26, left: 12 };
+    const width = 320;
+    const height = 168;
+    const padding = { top: 18, right: 18, bottom: 34, left: 42 };
     const prices = chartSnapshots.map((snap) => Number(snap.marketPrice || 0));
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const span = Math.max(max - min, 1);
     const plotWidth = width - padding.left - padding.right;
     const plotHeight = height - padding.top - padding.bottom;
+    const yTicks = [0, 0.5, 1].map((ratio) => {
+      const value = Math.round(max - span * ratio);
+      return {
+        value,
+        y: padding.top + plotHeight * ratio,
+      };
+    });
     const points = chartSnapshots.map((snap, idx) => {
       const x = padding.left + (chartSnapshots.length === 1 ? plotWidth / 2 : (idx / (chartSnapshots.length - 1)) * plotWidth);
       const y = padding.top + ((max - Number(snap.marketPrice || 0)) / span) * plotHeight;
       return {
         x,
         y,
+        value: Number(snap.marketPrice || 0),
         label: `${snap.date} ${snap.time.slice(0, 5)}`,
       };
     });
+    const linePath = points.reduce((acc, point, idx, arr) => {
+      if (idx === 0) return `M${point.x},${point.y}`;
+      const prev = arr[idx - 1];
+      const cx = (prev.x + point.x) / 2;
+      return `${acc} C${cx},${prev.y} ${cx},${point.y} ${point.x},${point.y}`;
+    }, "");
+    const areaPath = `${linePath} L${points[points.length - 1].x},${height - padding.bottom} L${points[0].x},${height - padding.bottom} Z`;
+    const peakPoint = points.reduce((prev, point) => (point.value > prev.value ? point : prev), points[0]);
+    const lowPoint = points.reduce((prev, point) => (point.value < prev.value ? point : prev), points[0]);
+
     return {
       width,
       height,
+      padding,
+      yTicks,
       points,
-      path: points.map((point, idx) => `${idx === 0 ? "M" : "L"}${point.x},${point.y}`).join(" "),
+      path: linePath,
+      areaPath,
+      peakPoint,
+      lowPoint,
       firstLabel: points[0]?.label || "",
       lastLabel: points[points.length - 1]?.label || "",
       trendUp: (latestSnapshot?.marketPrice || 0) >= Number(chartSnapshots[0]?.marketPrice || 0),
@@ -2224,7 +2247,30 @@ export default function App() {
             {marketChart && (
               <div className="market-chart-wrap">
                 <svg viewBox={`0 0 ${marketChart.width} ${marketChart.height}`} className="market-chart" role="img" aria-label="최근 시세 흐름 차트">
+                  <defs>
+                    <linearGradient id="chartAreaGold" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#d9b15f" stopOpacity="0.34" />
+                      <stop offset="100%" stopColor="#d9b15f" stopOpacity="0.04" />
+                    </linearGradient>
+                  </defs>
+                  {marketChart.yTicks.map((tick, idx) => (
+                    <g key={`tick-${idx}`}>
+                      <line
+                        x1={marketChart.padding.left}
+                        y1={tick.y}
+                        x2={marketChart.width - marketChart.padding.right}
+                        y2={tick.y}
+                        className="chart-grid-line"
+                      />
+                      <text x={marketChart.padding.left - 8} y={tick.y + 4} className="chart-y-label">
+                        {money(tick.value)}
+                      </text>
+                    </g>
+                  ))}
+                  <path d={marketChart.areaPath} className="market-chart-area" />
                   <path d={marketChart.path} className="market-chart-line" />
+                  <circle cx={marketChart.peakPoint.x} cy={marketChart.peakPoint.y} r={2.4} className="market-chart-extreme high" />
+                  <circle cx={marketChart.lowPoint.x} cy={marketChart.lowPoint.y} r={2.4} className="market-chart-extreme low" />
                   {marketChart.points.map((point, idx) => (
                     <circle
                       key={`point-${idx}`}
