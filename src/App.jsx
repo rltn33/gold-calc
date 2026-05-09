@@ -1793,6 +1793,27 @@ function productImageAlt(product) {
   return `${product.type} ${product.name}`;
 }
 
+
+function createDefaultMarketSnapshots() {
+  const now = new Date();
+  const basePrices = [982000, 985500, 989000, 987000, 992500, 996000, 999500];
+
+  return basePrices.map((marketPrice, idx) => {
+    const snapshotDate = new Date(now);
+    const offset = basePrices.length - 1 - idx;
+    snapshotDate.setDate(now.getDate() - offset);
+    const hour = 10 + (idx % 4);
+    const minute = (idx * 13) % 60;
+    snapshotDate.setHours(hour, minute, 0, 0);
+
+    return {
+      date: snapshotDate.toISOString().slice(0, 10),
+      time: snapshotDate.toTimeString().slice(0, 8),
+      marketPrice,
+    };
+  }).reverse();
+}
+
 function stockState(qty) {
   const amount = Number(qty || 0);
   if (amount <= 0) return "품절";
@@ -1858,12 +1879,13 @@ export default function App() {
   });
   const [marketSnapshots, setMarketSnapshots] = useState(() => {
     const saved = localStorage.getItem("gold-calc-market-snapshots-v1");
-    if (!saved) return [];
+    if (!saved) return createDefaultMarketSnapshots();
     try {
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed) || parsed.length === 0) return createDefaultMarketSnapshots();
+      return parsed;
     } catch {
-      return [];
+      return createDefaultMarketSnapshots();
     }
   });
 
