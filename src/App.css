@@ -33,6 +33,15 @@ tr.selected-row{background:#f8f1df}
 .chart-trend{margin-top:6px;font-size:12px;font-weight:700}
 .chart-trend.up{color:#166534}.chart-trend.down{color:#b42318}
 .recent-price-notes{margin-top:8px}
+
+.sales-panel{border:1px solid #d9e2ef;background:linear-gradient(180deg,#ffffff,#f9fbff)}
+.sales-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.sale-card{border:1px solid #dbe5f2;border-radius:10px;padding:10px;background:#fff;box-shadow:0 1px 0 rgba(11,30,59,.04)}
+.sale-card.canceled{background:#f7f8fa;border-color:#d6d9df;opacity:.8}
+.sale-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:#52627a}
+.sale-grid{display:grid;grid-template-columns:1fr;gap:6px}
+.sale-card-actions{margin-top:8px;display:flex;justify-content:flex-end}
+.recent-sales-empty{font-size:13px;color:#5e6d81;padding:6px 4px}
 .inventory-panel{padding-bottom:8px}.inventory-scroll{max-height:250px;overflow:auto}
 .head-actions{display:flex;gap:8px;align-items:center}.filter{width:180px}
 .stock-badge{padding:2px 8px;border-radius:999px;font-size:11px}.instock{background:#e9f7eb}.low{background:#fff7dd}.soldout{background:#ffe8e8}
