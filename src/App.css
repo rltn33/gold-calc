@@ -38,10 +38,10 @@ body {
 
 .dashboard-page {
   min-height: 100vh;
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   max-width: 1860px;
   margin: 0 auto;
 }
@@ -57,11 +57,11 @@ body {
 }
 
 .topbar {
-  padding: 12px 16px;
+  padding: 8px 12px;
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-950) 100%);
   border-color: rgba(10, 31, 58, 0.4);
   color: #f8fbff;
@@ -69,7 +69,7 @@ body {
 }
 
 .logo {
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 900;
   letter-spacing: 0px;
   background: linear-gradient(135deg, #f5d999 0%, #f0c961 100%);
@@ -89,7 +89,7 @@ body {
 .menu-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
 }
 
@@ -98,10 +98,10 @@ body {
   background: rgba(247, 250, 255, 0.08);
   color: #e8ecf4;
   border-radius: 999px;
-  padding: 7px 12px;
+  padding: 6px 10px;
   cursor: pointer;
   font-weight: 650;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.2s ease;
 }
 
@@ -157,17 +157,17 @@ body {
 
 .dashboard-main {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(280px, 360px) minmax(520px, 1.1fr) minmax(320px, 0.9fr);
+  gap: 10px;
   max-width: 1860px;
   margin: 0 auto;
-  min-height: 430px;
+  min-height: 0;
 }
 
 .search-panel,
 .product-panel,
 .inventory-panel { 
-  padding: 14px;
+  padding: 10px;
 }
 
 .search-panel,
@@ -183,14 +183,14 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
   border-bottom: 1.5px solid var(--border-subtle);
 }
 
 .panel-head h2 { 
   margin: 0; 
-  font-size: 18px; 
+  font-size: 16px; 
   color: var(--text-900);
   font-weight: 650;
   letter-spacing: -0.4px;
@@ -222,8 +222,8 @@ body {
 }
 
 .product-list {
-  margin-top: 12px;
-  max-height: calc(100vh - 280px);
+  margin-top: 8px;
+  max-height: calc(100vh - 220px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -425,7 +425,7 @@ body {
   border: 1.5px solid #d2aa3f;
   background: linear-gradient(146deg, #fffdf7 0%, #fdf3d9 48%, #fbefd0 100%);
   border-radius: 14px;
-  padding: 14px;
+  padding: 10px;
   box-shadow: 0 22px 42px rgba(84, 60, 12, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   position: relative;
 }
@@ -536,8 +536,8 @@ body {
 }
 
 .recent-sales-card .panel-head {
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -594,7 +594,7 @@ body {
 }
 
 .sales-log-wrap {
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
 .sales-head {
@@ -663,16 +663,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
+  padding: 10px;
   z-index: 30;
 }
 
 .modal-card {
-  width: min(760px, 100%);
+  width: min(680px, 100%);
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 14px;
+  padding: 10px;
   box-shadow: var(--shadow-xl);
 }
 
@@ -747,11 +747,11 @@ thead th {
 }
 
 .inventory-panel .table-wrap {
-  max-height: 300px;
+  max-height: 220px;
 }
 
 .inventory-panel .sales-log-wrap .table-wrap {
-  max-height: 220px;
+  max-height: 180px;
 }
 
 .selected-row { 
@@ -785,33 +785,47 @@ thead th {
 
 @media (min-width: 1241px) {
   .dashboard-main {
-    grid-template-areas:
-      "search product"
-      "search recent";
+    grid-template-areas: "search product right";
     align-items: start;
   }
 
   .search-panel {
     grid-area: search;
-    height: calc(100vh - 176px);
+    height: calc(100vh - 156px);
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 
   .product-panel {
     grid-area: product;
-    height: calc(100vh - 176px);
+    height: calc(100vh - 156px);
     overflow: auto;
+    min-height: 0;
   }
 
   .recent-sales-card {
-    grid-area: recent;
+    grid-area: right;
+    height: calc(100vh - 156px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .recent-sales-list {
+    overflow: auto;
+    min-height: 0;
+    padding-right: 2px;
   }
 
   .product-list {
     max-height: none;
     flex: 1;
     min-height: 0;
+  }
+
+  .inventory-panel {
+    margin-top: 0;
   }
 }
 
@@ -859,6 +873,6 @@ thead th {
   .search-panel,
   .product-panel,
   .inventory-panel {
-    padding: 14px;
+    padding: 10px;
   }
 }
