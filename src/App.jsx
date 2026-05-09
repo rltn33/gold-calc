@@ -1767,6 +1767,19 @@ const DEFAULT_MARGIN_BY_PURITY = {
 };
 
 const MENU_ITEMS = ["계산하기", "재고관리", "시세관리", "설정"];
+const EMPTY_PRODUCT_FORM = {
+  code: "",
+  purity: "24K",
+  type: "",
+  name: "",
+  weight: "",
+  don: "",
+  qty: 1,
+  company: "",
+  model: "",
+  labor: 0,
+  status: "재고중",
+};
 
 function money(value) {
   return Number(value || 0).toLocaleString("ko-KR");
@@ -1830,6 +1843,9 @@ export default function App() {
   const [laborOverride, setLaborOverride] = useState(0);
   const [purityOverride, setPurityOverride] = useState(INVENTORY[0]?.purity || "24K");
   const [activeMenu, setActiveMenu] = useState(MENU_ITEMS[0]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [productForm, setProductForm] = useState(EMPTY_PRODUCT_FORM);
   const [marginByPurity, setMarginByPurity] = useState(() => {
     const saved = localStorage.getItem("gold-calc-margin-by-purity-v1");
     if (!saved) return DEFAULT_MARGIN_BY_PURITY;
@@ -1907,6 +1923,71 @@ export default function App() {
     setLaborOverride(item.labor || 0);
   };
 
+  const openCreateModal = () => {
+    setModalMode("create");
+    setProductForm(EMPTY_PRODUCT_FORM);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = () => {
+    if (!selected) return;
+    setModalMode("edit");
+    setProductForm({
+      code: selected.code || "",
+      purity: selected.purity || "24K",
+      type: selected.type || "",
+      name: selected.name || "",
+      weight: selected.weight || "",
+      don: selected.don || "",
+      qty: selected.qty || 0,
+      company: selected.company || "",
+      model: selected.model || "",
+      labor: selected.labor || 0,
+      status: selected.status || stockState(selected.qty),
+    });
+    setIsModalOpen(true);
+  };
+
+  const updateProductForm = (key, value) => setProductForm((prev) => ({ ...prev, [key]: value }));
+
+  const saveProduct = () => {
+    if (!productForm.code.trim() || !productForm.name.trim() || !productForm.type.trim()) return;
+    const weight = Number(productForm.weight || 0);
+    const don = Number(productForm.don || 0);
+    const qty = Math.max(0, Number(productForm.qty || 0));
+    const labor = Number(productForm.labor || 0);
+    const normalized = {
+      code: productForm.code.trim(),
+      purity: productForm.purity || "24K",
+      type: productForm.type.trim(),
+      name: productForm.name.trim(),
+      weight,
+      don,
+      qty,
+      company: productForm.company.trim(),
+      model: productForm.model.trim(),
+      labor,
+      status: qty <= 0 ? "품절" : "재고중",
+      date: modalMode === "create" ? new Date().toISOString().slice(0, 10) : selected.date,
+    };
+
+    if (modalMode === "create") {
+      setInventory((prev) => [normalized, ...prev]);
+      setSelectedCode(normalized.code);
+    } else {
+      setInventory((prev) => prev.map((item) => (item.code === selected.code ? normalized : item)));
+      setSelectedCode(normalized.code);
+    }
+    setIsModalOpen(false);
+  };
+
+  const deleteSelectedProduct = () => {
+    if (!selected) return;
+    const nextInventory = inventory.filter((item) => item.code !== selected.code);
+    setInventory(nextInventory);
+    if (nextInventory.length > 0) setSelectedCode(nextInventory[0].code);
+  };
+
   const adjustInventoryQty = (code, delta) => {
     setInventory((prev) =>
       prev.map((item) => {
@@ -1978,6 +2059,7 @@ export default function App() {
   const recentMarketSnapshots = marketSnapshots.slice(0, 10);
 
   return (
+    <>
     <div className="dashboard-page">
       <header className="topbar">
         <div className="brand-wrap">
@@ -2024,7 +2106,10 @@ export default function App() {
         <aside className="search-panel">
           <div className="panel-head">
             <h2>제품 검색</h2>
-            <span>{filtered.length}건</span>
+            <div className="head-actions">
+              <span>{filtered.length}건</span>
+              <button type="button" className="sub-button" onClick={openCreateModal}>신규 제품 등록</button>
+            </div>
           </div>
           <input
             className="field"
@@ -2059,7 +2144,11 @@ export default function App() {
         <section className="product-panel">
           <div className="panel-head">
             <h2>선택 제품 정보</h2>
-            <span>{activeMenu}</span>
+            <div className="head-actions">
+              <span>{activeMenu}</span>
+              <button type="button" className="sub-button" onClick={openEditModal}>수정</button>
+              <button type="button" className="sub-button danger-button" onClick={deleteSelectedProduct}>삭제</button>
+            </div>
           </div>
 
           <div className="product-overview">
@@ -2295,6 +2384,35 @@ export default function App() {
         </div>
       </section>
     </div>
+    {isModalOpen && (
+      <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
+        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="panel-head">
+            <h2>{modalMode === "create" ? "신규 제품 등록" : "선택 상품 수정"}</h2>
+            <button type="button" className="sub-button" onClick={() => setIsModalOpen(false)}>닫기</button>
+          </div>
+          <div className="modal-form-grid">
+            <input className="field" placeholder="제품코드" value={productForm.code} onChange={(e) => updateProductForm("code", e.target.value)} />
+            <select className="field" value={productForm.purity} onChange={(e) => updateProductForm("purity", e.target.value)}>
+              <option value="24K">24K</option><option value="18K">18K</option><option value="14K">14K</option>
+            </select>
+            <input className="field" placeholder="종류" value={productForm.type} onChange={(e) => updateProductForm("type", e.target.value)} />
+            <input className="field" placeholder="제품명" value={productForm.name} onChange={(e) => updateProductForm("name", e.target.value)} />
+            <input className="field" type="number" placeholder="무게(g)" value={productForm.weight} onChange={(e) => updateProductForm("weight", e.target.value)} />
+            <input className="field" type="number" step="0.001" placeholder="중량(돈)" value={productForm.don} onChange={(e) => updateProductForm("don", e.target.value)} />
+            <input className="field" type="number" placeholder="수량" value={productForm.qty} onChange={(e) => updateProductForm("qty", e.target.value)} />
+            <input className="field" placeholder="회사" value={productForm.company} onChange={(e) => updateProductForm("company", e.target.value)} />
+            <input className="field" placeholder="모델명" value={productForm.model} onChange={(e) => updateProductForm("model", e.target.value)} />
+            <input className="field" type="number" placeholder="공임" value={productForm.labor} onChange={(e) => updateProductForm("labor", e.target.value)} />
+            <select className="field" value={productForm.status} onChange={(e) => updateProductForm("status", e.target.value)}>
+              <option value="재고중">재고중</option><option value="재고부족">재고부족</option><option value="품절">품절</option>
+            </select>
+          </div>
+          <button type="button" className="sale-button" onClick={saveProduct}>{modalMode === "create" ? "등록 완료" : "수정 완료"}</button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
