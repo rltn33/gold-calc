@@ -157,7 +157,7 @@ body {
 
 .dashboard-main {
   display: grid;
-  grid-template-columns: 340px 1fr 320px;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   gap: 14px;
   max-width: 1860px;
   margin: 0 auto;
@@ -779,6 +779,40 @@ thead th {
 .product-list::-webkit-scrollbar-thumb:hover,
 .table-wrap::-webkit-scrollbar-thumb:hover {
   background: var(--gold-500);
+}
+
+
+
+@media (min-width: 1241px) {
+  .dashboard-main {
+    grid-template-areas:
+      "search product"
+      "search recent";
+    align-items: start;
+  }
+
+  .search-panel {
+    grid-area: search;
+    height: calc(100vh - 176px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-panel {
+    grid-area: product;
+    height: calc(100vh - 176px);
+    overflow: auto;
+  }
+
+  .recent-sales-card {
+    grid-area: recent;
+  }
+
+  .product-list {
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+  }
 }
 
 @media (max-width: 1240px) {
