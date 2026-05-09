@@ -2060,358 +2060,119 @@ export default function App() {
 
   return (
     <>
-    <div className="dashboard-page">
-      <header className="topbar">
-        <div className="brand-wrap">
+      <div className="dashboard-page">
+        <header className="topbar">
           <div className="logo">GOLD CALC</div>
-          <div className="subtitle">관리자용 판매가 계산 + 재고관리 대시보드</div>
-        </div>
-        <nav className="menu-tabs" aria-label="관리 메뉴">
-          {MENU_ITEMS.map((menu) => (
-            <button
-              key={menu}
-              type="button"
-              className={`menu-tab ${activeMenu === menu ? "active" : ""}`}
-              onClick={() => setActiveMenu(menu)}
-            >
-              {menu}
-            </button>
-          ))}
-        </nav>
-        <div className="header-stats">
-          <div className="stat-card kpi-sales">
-            <span>오늘 매출</span>
-            <b>{money(todaySalesTotal)}원</b>
-          </div>
-          <div className="stat-card">
-            <span>재고중</span>
-            <b>{inStockCount}개</b>
-          </div>
-          <div className="stat-card danger">
-            <span>품절</span>
-            <b>{soldOutCount}개</b>
-          </div>
-          <div className="stat-card">
-            <span>등록 제품</span>
-            <b>{inventory.length}개</b>
-          </div>
-          <div className="stat-card warning">
-            <span>재고부족</span>
-            <b>{lowStockCount}개</b>
-          </div>
-        </div>
-      </header>
-
-      <main className="dashboard-main">
-        <aside className="search-panel">
-          <div className="panel-head">
-            <h2>제품 검색</h2>
-            <div className="head-actions">
-              <span>{filtered.length}건</span>
-              <button type="button" className="sub-button" onClick={openCreateModal}>신규 제품 등록</button>
-            </div>
-          </div>
-          <input
-            className="field"
-            placeholder="제품명 / 코드 / 회사 / 모델명 검색"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-          />
-          <div className="product-list">
-            {filtered.map((item) => (
+          <nav className="menu-tabs" aria-label="관리 메뉴">
+            {MENU_ITEMS.map((menu) => (
               <button
-                key={item.code}
+                key={menu}
                 type="button"
-                onClick={() => chooseProduct(item)}
-                className={`product-item ${selected.code === item.code ? "active" : ""}`}
+                className={`menu-tab ${activeMenu === menu ? "active" : ""}`}
+                onClick={() => setActiveMenu(menu)}
               >
-                <div className="item-top">
-                  <b>{item.code}</b>
-                  <span className="badge">{item.purity}</span>
-                </div>
-                <div className="item-name">{item.type} · {item.name}</div>
-                <div className="item-sub">
-                  {item.company || "회사 미입력"} / {item.weight}g / 재고 {item.qty}개
-                  <span className={`stock-badge ${stockState(item.qty) === "품절" ? "soldout" : stockState(item.qty) === "재고부족" ? "low" : "instock"}`}>
-                    {stockState(item.qty)}
-                  </span>
-                </div>
+                {menu}
               </button>
             ))}
-          </div>
-        </aside>
+          </nav>
+          <button type="button" className="status-button">운영중</button>
+        </header>
 
-        <section className="product-panel">
-          <div className="panel-head">
-            <h2>선택 제품 정보</h2>
-            <div className="head-actions">
-              <span>{activeMenu}</span>
-              <button type="button" className="sub-button" onClick={openEditModal}>수정</button>
-              <button type="button" className="sub-button danger-button" onClick={deleteSelectedProduct}>삭제</button>
+        <section className="top-row">
+          <article className="panel compact">
+            <div className="panel-head"><h2>제품 검색</h2><span>{filtered.length}건</span></div>
+            <div className="search-actions">
+              <input className="field" placeholder="제품명 / 코드 / 회사 / 모델명" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+              <button type="button" className="sub-button" onClick={openCreateModal}>신규 등록</button>
             </div>
-          </div>
-
-          <div className="product-overview">
-            <div className="image-wrap" role="img" aria-label={productImageAlt(selected)}>
-              <div className="image-chip">{selected.purity}</div>
-              <div className="image-title">{selected.type}</div>
-              <div className="image-name">{selected.name}</div>
-              <div className="image-meta">{selected.weight}g · 코드 {selected.code}</div>
+          </article>
+          <article className="panel compact">
+            <div className="panel-head"><h2>24K 시세 입력</h2><span>원/돈</span></div>
+            <div className="search-actions">
+              <input className="field" type="number" value={marketPrice} onChange={(e) => setMarketPrice(e.target.value)} />
+              <button type="button" className="sub-button" onClick={saveMarketSnapshot}>저장</button>
             </div>
-
-            <div className="info-grid">
-              <Info label="제품코드" value={selected.code} />
-              <Info label="제품명" value={`${selected.type} · ${selected.name}`} />
-              <Info label="회사" value={selected.company || "미입력"} />
-              <Info label="모델명" value={selected.model || "-"} />
-              <Info label="등록 함량" value={selected.purity} />
-              <Info label="계산 함량" value={purityOverride} />
-              <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
-              <Info label="재고" value={`${selected.qty}개 / ${stockState(selected.qty)}`} />
-            </div>
-          </div>
-
-          <div className="calc-grid">
-            <div className="calc-card">
-              <label>24K 시세(원/돈)</label>
-              <div className="inline-field-wrap">
-                <input
-                  className="field"
-                  type="number"
-                  value={marketPrice}
-                  onChange={(e) => setMarketPrice(e.target.value)}
-                />
-                <button type="button" className="sub-button" onClick={saveMarketSnapshot}>시세 저장</button>
-              </div>
-            </div>
-            <div className="calc-card">
-              <label>순도 변경</label>
-              <select
-                className="field"
-                value={purityOverride}
-                onChange={(e) => setPurityOverride(e.target.value)}
-              >
-                <option value="24K">24K</option>
-                <option value="18K">18K</option>
-                <option value="14K">14K</option>
-              </select>
-            </div>
-            <div className="calc-card">
-              <label>공임</label>
-              <input
-                className="field"
-                type="number"
-                value={laborOverride}
-                onChange={(e) => setLaborOverride(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="margin-grid">
-            {Object.keys(DEFAULT_MARGIN_BY_PURITY).map((purity) => (
-              <div className="calc-card" key={`margin-${purity}`}>
-                <label>{purity} 마진 배수</label>
-                <input
-                  className="field"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={marginByPurity[purity]}
-                  onChange={(e) => updateMargin(purity, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="price-box">
-            <div className="price-label">판매가</div>
-            <div className="price-value">{money(calc.displayPrice)}원</div>
-            <div className="formula">
-              ({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin} = {money(Math.round(calc.finalPrice))}원
-            </div>
-            <button
-              type="button"
-              className="sale-button"
-              onClick={completeSale}
-              disabled={Number(selected.qty || 0) <= 0}
-            >
-              판매 완료
-            </button>
-          </div>
-
+          </article>
+          <article className="panel compact summary">
+            <div className="panel-head"><h2>운영 요약</h2><span>{today}</span></div>
+            <div className="kpi-row"><b>{money(todaySalesTotal)}원</b><span>오늘 매출</span></div>
+            <div className="mini-kpi">재고중 {inStockCount} / 부족 {lowStockCount} / 품절 {soldOutCount}</div>
+          </article>
         </section>
 
-        <aside className="recent-sales-card">
-          <div className="panel-head sales-head">
-            <h2>최근 판매내역</h2>
-            <span>최신 5건</span>
-          </div>
-          {recentSales.slice(0, 5).length > 0 ? (
-            <div className="recent-sales-list">
-              {recentSales.slice(0, 5).map((log, idx) => (
-                <div className="recent-sale-item" key={`quick-sale-${log.date}-${log.time}-${log.code}-${idx}`}>
-                  <div>
-                    <b>{log.name}</b>
-                    <div>{log.date} {log.time}</div>
-                  </div>
-                  <strong>{money(log.amount)}원</strong>
-                </div>
-              ))}
+        <section className="middle-row">
+          <article className="panel results-panel">
+            <div className="panel-head"><h2>검색 결과</h2><span>테이블</span></div>
+            <div className="table-wrap compact-table">
+              <table>
+                <thead><tr><th>코드</th><th>제품명</th><th>순도</th><th>회사</th><th>재고</th></tr></thead>
+                <tbody>
+                  {filtered.map((item) => (
+                    <tr key={`result-${item.code}`} className={selected.code === item.code ? "selected-row" : ""} onClick={() => chooseProduct(item)}>
+                      <td>{item.code}</td><td>{item.type} · {item.name}</td><td>{item.purity}</td><td>{item.company}</td><td>{item.qty}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="recent-sales-empty">판매 내역이 없습니다.</div>
-          )}
-        </aside>
-      </main>
+          </article>
 
-      <section className="inventory-panel">
-        <div className="panel-head">
-          <h2>재고관리 테이블</h2>
-          <span>실재고 기준 정렬 없음 · 검색 결과 연동</span>
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>코드</th>
-                <th>구분</th>
-                <th>제품명</th>
-                <th>순도</th>
-                <th>무게(g)</th>
-                <th>수량</th>
-                <th>조정</th>
-                <th>회사</th>
-                <th>상태</th>
-                <th>입고일</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item) => (
-                <tr key={`table-${item.code}`} className={selected.code === item.code ? "selected-row" : ""}>
-                  <td>{item.code}</td>
-                  <td>{item.type}</td>
-                  <td>{item.name}</td>
-                  <td>{item.purity}</td>
-                  <td>{item.weight}</td>
-                  <td>{item.qty}</td>
-                  <td>
-                    <div className="qty-adjust">
-                      <button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, -1)}>-</button>
-                      <button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, 1)}>+</button>
-                    </div>
-                  </td>
-                  <td>{item.company}</td>
-                  <td>
-                    <span className={`stock-badge ${stockState(item.qty) === "품절" ? "soldout" : stockState(item.qty) === "재고부족" ? "low" : "instock"}`}>
-                      {stockState(item.qty)}
-                    </span>
-                  </td>
-                  <td>{item.date}</td>
-                </tr>
+          <article className="panel product-panel">
+            <div className="panel-head">
+              <h2>선택 제품 정보</h2>
+              <div className="head-actions">
+                <button type="button" className="sub-button" onClick={openEditModal}>수정</button>
+                <button type="button" className="sub-button danger-button" onClick={deleteSelectedProduct}>삭제</button>
+              </div>
+            </div>
+            <div className="product-overview">
+              <div className="image-wrap" role="img" aria-label={productImageAlt(selected)}>
+                <div className="image-chip">IMAGE</div>
+                <div className="image-title">{selected.type}</div>
+                <div className="image-name">{selected.name}</div>
+              </div>
+              <div className="info-grid">
+                <Info label="제품명" value={`${selected.type} · ${selected.name}`} />
+                <Info label="회사" value={selected.company || "미입력"} />
+                <Info label="순도" value={`${selected.purity} → ${purityOverride}`} />
+                <Info label="무게" value={`${selected.weight}g (${selected.don}돈)`} />
+                <Info label="공임" value={`${money(laborOverride)}원`} />
+              </div>
+            </div>
+            <div className="calc-grid">
+              <select className="field" value={purityOverride} onChange={(e) => setPurityOverride(e.target.value)}><option value="24K">24K</option><option value="18K">18K</option><option value="14K">14K</option></select>
+              <input className="field" type="number" value={laborOverride} onChange={(e) => setLaborOverride(e.target.value)} />
+              <button type="button" className="sub-button">검산식</button>
+            </div>
+            <div className="price-box">
+              <div className="price-label">판매가</div><div className="price-value">{money(calc.displayPrice)}원</div>
+              <div className="formula">({selected.weight} ÷ 3.75 × {calc.factor} × {money(marketPrice)} + {money(calc.labor)}) × {calc.margin}</div>
+              <button type="button" className="sale-button" onClick={completeSale} disabled={Number(selected.qty || 0) <= 0}>판매 완료</button>
+            </div>
+          </article>
+
+          <article className="panel compact summary">
+            <div className="panel-head"><h2>최근 저장 시세</h2><span>최신 5건</span></div>
+            <div className="mini-list">
+              {recentMarketSnapshots.slice(0, 5).map((snap, idx) => (
+                <div key={`${snap.date}-${idx}`} className="mini-item">{snap.date} {snap.time} <b>{money(snap.marketPrice)}</b></div>
               ))}
-            </tbody>
-          </table>
-        </div>
+              {recentMarketSnapshots.length === 0 && <div className="recent-sales-empty">저장된 시세 없음</div>}
+            </div>
+          </article>
+        </section>
 
-        <div className="sales-log-wrap">
-          <div className="panel-head sales-head">
-            <h2>저장된 시세 내역</h2>
-            <span>최근 10건</span>
+        <section className="panel inventory-panel">
+          <div className="panel-head"><h2>재고관리 테이블</h2><div className="head-actions"><input className="field filter" placeholder="필터/검색" /><button className="sub-button">엑셀</button></div></div>
+          <div className="table-wrap inventory-scroll">
+            <table><thead><tr><th>코드</th><th>구분</th><th>제품명</th><th>순도</th><th>무게</th><th>수량</th><th>조정</th><th>회사</th><th>상태</th><th>입고일</th></tr></thead>
+            <tbody>{filtered.map((item) => (<tr key={`table-${item.code}`} className={selected.code === item.code ? "selected-row" : ""}><td>{item.code}</td><td>{item.type}</td><td>{item.name}</td><td>{item.purity}</td><td>{item.weight}</td><td>{item.qty}</td><td><div className="qty-adjust"><button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, -1)}>-</button><button type="button" className="qty-btn" onClick={() => adjustInventoryQty(item.code, 1)}>+</button></div></td><td>{item.company}</td><td><span className={`stock-badge ${stockState(item.qty) === "품절" ? "soldout" : stockState(item.qty) === "재고부족" ? "low" : "instock"}`}>{stockState(item.qty)}</span></td><td>{item.date}</td></tr>))}</tbody></table>
           </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>날짜</th>
-                  <th>시간</th>
-                  <th>24K 시세(원/돈)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentMarketSnapshots.length > 0 ? (
-                  recentMarketSnapshots.map((snap, idx) => (
-                    <tr key={`${snap.date}-${snap.time}-${idx}`}>
-                      <td>{snap.date}</td>
-                      <td>{snap.time}</td>
-                      <td>{money(snap.marketPrice)}원</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3}>저장된 시세가 없습니다.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="panel-head sales-head">
-            <h2>최근 판매 내역</h2>
-            <span>최근 10건</span>
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>날짜</th>
-                  <th>시간</th>
-                  <th>제품명</th>
-                  <th>코드</th>
-                  <th>금액</th>
-                  <th>순도</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentSales.length > 0 ? (
-                  recentSales.map((log, idx) => (
-                    <tr key={`${log.date}-${log.time}-${log.code}-${idx}`}>
-                      <td>{log.date}</td>
-                      <td>{log.time}</td>
-                      <td>{log.name}</td>
-                      <td>{log.code}</td>
-                      <td>{money(log.amount)}원</td>
-                      <td>{log.purity}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6}>판매 내역이 없습니다.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </div>
-    {isModalOpen && (
-      <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-          <div className="panel-head">
-            <h2>{modalMode === "create" ? "신규 제품 등록" : "선택 상품 수정"}</h2>
-            <button type="button" className="sub-button" onClick={() => setIsModalOpen(false)}>닫기</button>
-          </div>
-          <div className="modal-form-grid">
-            <input className="field" placeholder="제품코드" value={productForm.code} onChange={(e) => updateProductForm("code", e.target.value)} />
-            <select className="field" value={productForm.purity} onChange={(e) => updateProductForm("purity", e.target.value)}>
-              <option value="24K">24K</option><option value="18K">18K</option><option value="14K">14K</option>
-            </select>
-            <input className="field" placeholder="종류" value={productForm.type} onChange={(e) => updateProductForm("type", e.target.value)} />
-            <input className="field" placeholder="제품명" value={productForm.name} onChange={(e) => updateProductForm("name", e.target.value)} />
-            <input className="field" type="number" placeholder="무게(g)" value={productForm.weight} onChange={(e) => updateProductForm("weight", e.target.value)} />
-            <input className="field" type="number" step="0.001" placeholder="중량(돈)" value={productForm.don} onChange={(e) => updateProductForm("don", e.target.value)} />
-            <input className="field" type="number" placeholder="수량" value={productForm.qty} onChange={(e) => updateProductForm("qty", e.target.value)} />
-            <input className="field" placeholder="회사" value={productForm.company} onChange={(e) => updateProductForm("company", e.target.value)} />
-            <input className="field" placeholder="모델명" value={productForm.model} onChange={(e) => updateProductForm("model", e.target.value)} />
-            <input className="field" type="number" placeholder="공임" value={productForm.labor} onChange={(e) => updateProductForm("labor", e.target.value)} />
-            <select className="field" value={productForm.status} onChange={(e) => updateProductForm("status", e.target.value)}>
-              <option value="재고중">재고중</option><option value="재고부족">재고부족</option><option value="품절">품절</option>
-            </select>
-          </div>
-          <button type="button" className="sale-button" onClick={saveProduct}>{modalMode === "create" ? "등록 완료" : "수정 완료"}</button>
-        </div>
+        </section>
       </div>
-    )}
+      {isModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}><div className="modal-card" onClick={(e) => e.stopPropagation()}><div className="panel-head"><h2>{modalMode === "create" ? "신규 제품 등록" : "선택 상품 수정"}</h2><button type="button" className="sub-button" onClick={() => setIsModalOpen(false)}>닫기</button></div><div className="modal-form-grid"><input className="field" placeholder="제품코드" value={productForm.code} onChange={(e) => updateProductForm("code", e.target.value)} /><select className="field" value={productForm.purity} onChange={(e) => updateProductForm("purity", e.target.value)}><option value="24K">24K</option><option value="18K">18K</option><option value="14K">14K</option></select><input className="field" placeholder="종류" value={productForm.type} onChange={(e) => updateProductForm("type", e.target.value)} /><input className="field" placeholder="제품명" value={productForm.name} onChange={(e) => updateProductForm("name", e.target.value)} /><input className="field" type="number" placeholder="무게(g)" value={productForm.weight} onChange={(e) => updateProductForm("weight", e.target.value)} /><input className="field" type="number" step="0.001" placeholder="중량(돈)" value={productForm.don} onChange={(e) => updateProductForm("don", e.target.value)} /><input className="field" type="number" placeholder="수량" value={productForm.qty} onChange={(e) => updateProductForm("qty", e.target.value)} /><input className="field" placeholder="회사" value={productForm.company} onChange={(e) => updateProductForm("company", e.target.value)} /><input className="field" placeholder="모델명" value={productForm.model} onChange={(e) => updateProductForm("model", e.target.value)} /><input className="field" type="number" placeholder="공임" value={productForm.labor} onChange={(e) => updateProductForm("labor", e.target.value)} /><select className="field" value={productForm.status} onChange={(e) => updateProductForm("status", e.target.value)}><option value="재고중">재고중</option><option value="재고부족">재고부족</option><option value="품절">품절</option></select></div><button type="button" className="sale-button" onClick={saveProduct}>{modalMode === "create" ? "등록 완료" : "수정 완료"}</button></div></div>
+      )}
     </>
   );
 }
