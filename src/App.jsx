@@ -2057,6 +2057,39 @@ export default function App() {
   const soldOutCount = inventory.filter((item) => Number(item.qty || 0) <= 0).length;
   const recentSales = salesLog.slice(0, 10);
   const recentMarketSnapshots = marketSnapshots.slice(0, 10);
+  const chartSnapshots = [...recentMarketSnapshots].reverse();
+  const latestSnapshot = recentMarketSnapshots[0];
+
+  const marketChart = useMemo(() => {
+    if (chartSnapshots.length === 0) return null;
+    const width = 300;
+    const height = 140;
+    const padding = { top: 12, right: 12, bottom: 26, left: 12 };
+    const prices = chartSnapshots.map((snap) => Number(snap.marketPrice || 0));
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const span = Math.max(max - min, 1);
+    const plotWidth = width - padding.left - padding.right;
+    const plotHeight = height - padding.top - padding.bottom;
+    const points = chartSnapshots.map((snap, idx) => {
+      const x = padding.left + (chartSnapshots.length === 1 ? plotWidth / 2 : (idx / (chartSnapshots.length - 1)) * plotWidth);
+      const y = padding.top + ((max - Number(snap.marketPrice || 0)) / span) * plotHeight;
+      return {
+        x,
+        y,
+        label: `${snap.date} ${snap.time.slice(0, 5)}`,
+      };
+    });
+    return {
+      width,
+      height,
+      points,
+      path: points.map((point, idx) => `${idx === 0 ? "M" : "L"}${point.x},${point.y}`).join(" "),
+      firstLabel: points[0]?.label || "",
+      lastLabel: points[points.length - 1]?.label || "",
+      trendUp: (latestSnapshot?.marketPrice || 0) >= Number(chartSnapshots[0]?.marketPrice || 0),
+    };
+  }, [chartSnapshots, latestSnapshot]);
 
   return (
     <>
@@ -2152,9 +2185,32 @@ export default function App() {
           </article>
 
           <article className="panel compact summary">
-            <div className="panel-head"><h2>최근 저장 시세</h2><span>최신 5건</span></div>
-            <div className="mini-list">
-              {recentMarketSnapshots.slice(0, 5).map((snap, idx) => (
+            <div className="panel-head"><h2>최근 저장 시세</h2><span>라인 차트</span></div>
+            {marketChart && (
+              <div className="market-chart-wrap">
+                <svg viewBox={`0 0 ${marketChart.width} ${marketChart.height}`} className="market-chart" role="img" aria-label="최근 시세 흐름 차트">
+                  <path d={marketChart.path} className="market-chart-line" />
+                  {marketChart.points.map((point, idx) => (
+                    <circle
+                      key={`point-${idx}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r={idx === marketChart.points.length - 1 ? 4 : 2.6}
+                      className={idx === marketChart.points.length - 1 ? "market-chart-point latest" : "market-chart-point"}
+                    />
+                  ))}
+                </svg>
+                <div className="chart-axis-labels">
+                  <span>{marketChart.firstLabel}</span>
+                  <span>{marketChart.lastLabel}</span>
+                </div>
+                <div className={`chart-trend ${marketChart.trendUp ? "up" : "down"}`}>
+                  {marketChart.trendUp ? "↗ 상승 흐름" : "↘ 하락 흐름"}
+                </div>
+              </div>
+            )}
+            <div className="mini-list recent-price-notes">
+              {recentMarketSnapshots.slice(0, 3).map((snap, idx) => (
                 <div key={`${snap.date}-${idx}`} className="mini-item">{snap.date} {snap.time} <b>{money(snap.marketPrice)}</b></div>
               ))}
               {recentMarketSnapshots.length === 0 && <div className="recent-sales-empty">저장된 시세 없음</div>}

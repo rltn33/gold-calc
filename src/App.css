@@ -24,6 +24,15 @@ tr.selected-row{background:#f8f1df}
 .price-box{margin-top:8px;border:1px solid #d8e0ea;border-radius:10px;padding:10px;background:#f8fbff}.price-value{font-size:30px;font-weight:800;color:#153866}.formula{font-size:12px;color:#5e6d81;margin:6px 0}
 .sale-button{border:0;background:linear-gradient(135deg,#cfa037,#e3c269);padding:9px 14px;border-radius:8px;font-weight:700}
 .summary .mini-list{display:grid;gap:6px}.mini-item{font-size:12px;padding:6px 8px;border:1px solid #e7edf5;border-radius:8px;display:flex;justify-content:space-between}
+.market-chart-wrap{border:1px solid #e7edf5;border-radius:10px;padding:8px;background:#f8fbff;margin-bottom:8px}
+.market-chart{width:100%;height:150px;display:block}
+.market-chart-line{fill:none;stroke:#2f6fcf;stroke-width:2.5}
+.market-chart-point{fill:#6b9de5}
+.market-chart-point.latest{fill:#cfa037;stroke:#fff;stroke-width:1.5}
+.chart-axis-labels{display:flex;justify-content:space-between;font-size:11px;color:#5e6d81}
+.chart-trend{margin-top:6px;font-size:12px;font-weight:700}
+.chart-trend.up{color:#166534}.chart-trend.down{color:#b42318}
+.recent-price-notes{margin-top:8px}
 .inventory-panel{padding-bottom:8px}.inventory-scroll{max-height:250px;overflow:auto}
 .head-actions{display:flex;gap:8px;align-items:center}.filter{width:180px}
 .stock-badge{padding:2px 8px;border-radius:999px;font-size:11px}.instock{background:#e9f7eb}.low{background:#fff7dd}.soldout{background:#ffe8e8}
