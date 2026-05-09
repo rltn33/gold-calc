@@ -2036,20 +2036,33 @@ export default function App() {
 
     setSalesLog((prev) => [
       {
+        id: `${selected.code}-${Date.now()}`,
         date,
         time,
         name: selected.name,
         code: selected.code,
         amount: calc.displayPrice,
         purity: purityOverride,
+        qty: 1,
+        canceled: false,
       },
       ...prev,
     ]);
   };
 
+  const cancelSale = (saleId) => {
+    const sale = salesLog.find((item) => item.id === saleId);
+    if (!sale || sale.canceled) return;
+    const ok = window.confirm(`판매를 취소하시겠습니까?\n${sale.code} / ${sale.name} / ${money(sale.amount)}원`);
+    if (!ok) return;
+
+    adjustInventoryQty(sale.code, Number(sale.qty || 1));
+    setSalesLog((prev) => prev.map((item) => (item.id === saleId ? { ...item, canceled: true, canceledAt: new Date().toISOString() } : item)));
+  };
+
   const today = new Date().toISOString().slice(0, 10);
   const todaySalesTotal = salesLog
-    .filter((log) => log.date === today)
+    .filter((log) => log.date === today && !log.canceled)
     .reduce((sum, log) => sum + Number(log.amount || 0), 0);
 
   const inStockCount = inventory.filter((item) => Number(item.qty || 0) > 1).length;
@@ -2216,6 +2229,35 @@ export default function App() {
               {recentMarketSnapshots.length === 0 && <div className="recent-sales-empty">저장된 시세 없음</div>}
             </div>
           </article>
+        </section>
+
+
+
+        <section className="panel sales-panel">
+          <div className="panel-head"><h2>최근 판매내역</h2><span>{recentSales.length}건</span></div>
+          <div className="sales-list">
+            {recentSales.map((sale, idx) => (
+              <article key={sale.id || `${sale.code}-${sale.date}-${sale.time}-${idx}`} className={`sale-card ${sale.canceled ? "canceled" : ""}`}>
+                <div className="sale-meta">
+                  <b>{sale.date} {sale.time}</b>
+                  <span>{sale.canceled ? "취소됨" : "판매완료"}</span>
+                </div>
+                <div className="sale-grid">
+                  <Info label="제품코드" value={sale.code} />
+                  <Info label="제품명" value={sale.name} />
+                  <Info label="판매금액" value={`${money(sale.amount)}원`} />
+                  <Info label="순도" value={sale.purity} />
+                  <Info label="수량" value={`${sale.qty || 1}`} />
+                </div>
+                {!sale.canceled && sale.id && (
+                  <div className="sale-card-actions">
+                    <button type="button" className="sub-button danger-button" onClick={() => cancelSale(sale.id)}>판매 취소</button>
+                  </div>
+                )}
+              </article>
+            ))}
+            {recentSales.length === 0 && <div className="recent-sales-empty">판매내역 없음</div>}
+          </div>
         </section>
 
         <section className="panel inventory-panel">
